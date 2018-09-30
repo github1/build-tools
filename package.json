@@ -1,0 +1,59 @@
+{
+  "name": "@common/build-tools",
+  "private": "true",
+  "version": "0.4.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "build-tools": "bin/cli.js",
+    "build-tools-package-server": "bin/package-server.sh"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [],
+  "author": "John Collier <john.collier4@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@common/app-server": "0.0.0",
+    "@common/inkscape-util": "0.0.0",
+    "autoprefixer": "^8.3.0",
+    "babel-core": "^6.26.0",
+    "babel-jest": "^22.4.3",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-closure-elimination": "^1.3.0",
+    "babel-plugin-transform-remove-strict-mode": "0.0.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-3": "^6.24.1",
+    "chalk": "^2.3.2",
+    "css-loader": "^0.28.11",
+    "express": "^4.16.3",
+    "get-port": "^3.2.0",
+    "idempotent-babel-polyfill": "^0.1.1",
+    "ignore-styles": "^5.0.1",
+    "jest": "^22.4.3",
+    "jest-cli": "^22.4.3",
+    "less": "^3.0.1",
+    "less-loader": "^4.1.0",
+    "mini-css-extract-plugin": "^0.4.0",
+    "mkdirp": "^0.5.1",
+    "node-sass": "^4.8.3",
+    "postcss-loader": "^2.1.4",
+    "puppeteer": "^1.3.0",
+    "react-render-to-json": "^0.0.6",
+    "rimraf": "^2.6.2",
+    "sass-loader": "^7.0.1",
+    "style-loader": "^0.20.3",
+    "webpack": "^4.5.0",
+    "webpack-dev-middleware": "^3.1.2",
+    "webpack-hot-middleware": "^2.21.2",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "devDependencies": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/github1/build-tools"
+  }
+}
