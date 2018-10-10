@@ -1,4 +1,5 @@
 require('regenerator-runtime/runtime');
+const fs = require('fs');
 
 global.findJson = (json, func, matches) => {
     matches = matches || [];
@@ -44,4 +45,19 @@ global.DeferredPromise = (opts) => {
         return promise.then(opts.onReject);
     };
     return promise;
+};
+
+global._log = (...things) => {
+    fs.appendFileSync('/tmp/build-tools-test.log', things.map(thing => {
+        if (thing !== null && typeof thing === 'object') {
+            if (thing.constructor) {
+                thing = {
+                    ...thing,
+                    __type: thing.constructor.name
+                }
+            }
+            return JSON.stringify(thing, null, 2);
+        }
+        return thing;
+    }).join(' ') + '\n');
 };
