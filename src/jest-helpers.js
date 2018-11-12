@@ -1,5 +1,6 @@
 require('regenerator-runtime/runtime');
 const fs = require('fs');
+const stringify = require('json-stringify-safe');
 
 global.findJson = (json, func, matches) => {
     matches = matches || [];
@@ -56,7 +57,7 @@ global._log = (...things) => {
                     __type: thing.constructor.name
                 }
             }
-            return JSON.stringify(thing, null, 2);
+            return stringify(thing, null, 2);
         }
         return thing;
     }).join(' ') + '\n');
