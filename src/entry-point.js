@@ -6,6 +6,7 @@ const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
 const getPort = require('get-port');
 const processArgs = require('./process-args');
+const open = require('open');
 
 module.exports = (tools, packageJsonLoader, process, outerExit) => {
     return new Promise(resolve => {
@@ -225,17 +226,22 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     if (process.env.NO_WEBPACK) {
                         return;
                     }
+                    const serverUrl = `http://localhost:${context.port}`;
                     const webpackDevMiddleware = require('webpack-dev-middleware');
                     const webpackHotMiddleware = require('webpack-hot-middleware');
                     const webpackConfig = prepareWebpackConfig();
                     webpackConfig.output.publicPath = `http://localhost:${context.port}/`;
-                    webpackConfig.entry.main.unshift(`webpack-hot-middleware/client?path=http://localhost:${context.port}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`);
+                    webpackConfig.entry.main.unshift(`webpack-hot-middleware/client?path=${serverUrl}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`);
                     webpackConfig.plugins.unshift(new webpack.HotModuleReplacementPlugin());
                     const compiler = webpack(webpackConfig);
                     app.use(webpackDevMiddleware(compiler, {
                         publicPath: webpackConfig.output.publicPath
                     }));
                     app.use(webpackHotMiddleware(compiler));
+                    open(serverUrl, { app: ['google chrome'] })
+                        .catch(err => {
+                        // ignore
+                    });
                 }
             };
         };
