@@ -251,17 +251,37 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
          */
         const runTask = (task, exitToUse) => {
             switch (task) {
+                case 'build':
                 case 'bundle':
                 {
-                    Promise.all(['webpack-server', 'webpack'].map(task => {
-                        return new Promise((resolve) => {
-                            runTask(task, (status) => {
-                                resolve(status);
-                            });
+                    const hasTsConfig = fs.existsSync(path.join(workDir, 'tsconfig.json'));
+                    if (hasTsConfig)
+                    {
+                        const exec = require('child_process').exec;
+                        const tscBin = path.resolve(require.resolve('typescript'),'../../bin/tsc');
+                        const compiler = `${tscBin} -p tsconfig.json`;
+                        exec(compiler, {
+                            cwd: workDir
+                        }, (error, stdout, stderr) => {
+                            if (error) {
+                                console.log(chalk.red(stdout.toString()));
+                                exit(1);
+                            } else {
+                                console.log(chalk.green('Build complete'));
+                                exit(0);
+                            }
                         });
-                    })).then((statuses) => {
-                        exit(Math.max(...statuses));
-                    });
+                    } else {
+                        Promise.all(['webpack-server', 'webpack'].map(task => {
+                            return new Promise((resolve) => {
+                                runTask(task, (status) => {
+                                    resolve(status);
+                                });
+                            });
+                        })).then((statuses) => {
+                            exit(Math.max(...statuses));
+                        });
+                    }
                     break;
                 }
                 case 'webpack-server':
@@ -290,22 +310,24 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         onStart: () => {
                             const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
                             const jestConfig = {
+                                verbose: true,
                                 rootDir: workDir,
                                 testEnvironment: 'jsdom',
                                 testURL: 'http://localhost',
+                                testRegex: '.*\\.test\\.(js|ts)$',
                                 globals: {},
-                                moduleFileExtensions: ['js', 'json'],
+                                moduleFileExtensions: ['js', 'ts', 'json'],
                                 moduleDirectories: ['node_modules'],
-                                collectCoverageFrom: ['src/**/*.{js,jsx}'],
+                                collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}'],
                                 watchPathIgnorePatterns: ['dist', 'target'],
                                 moduleNameMapper: {
                                     "\\.(css|less|sass|scss)$": __dirname + '/__mocks__/style-mock.js'
                                 },
                                 transform: {
-                                    "^.+\\.js$": jestTransform
+                                    "^.+\\.js$": jestTransform,
+                                    "^.+\\.ts$": 'ts-jest'
                                 }
                             };
-                            //jestConfig.setupTestFrameworkScriptFile = require.resolve('./jest-setup-jsdom-node.js');
                             jestConfig.setupFiles = [require.resolve('./jest-helpers.js')];
                             if (fs.existsSync(path.join(workDir, 'jestSetup.js'))) {
                                 jestConfig.setupFiles.push('<rootDir>/jestSetup.js');
