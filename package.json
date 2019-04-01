@@ -1,7 +1,7 @@
 {
   "name": "@common/build-tools",
-  "private": "true",
-  "version": "0.0.3",
+  "private": true,
+  "version": "0.0.4",
   "description": "",
   "main": "index.js",
   "bin": {
