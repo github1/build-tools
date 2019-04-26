@@ -136,15 +136,26 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         }, {
                             loader: require.resolve('css-loader')
                         }, {
-                            loader: require.resolve('sass-loader')
-                        }, {
                             loader: require.resolve('postcss-loader'),
                             options: {
                                 plugins: [
                                     require('autoprefixer')
                                 ]
                             }
+                        }, {
+                            loader: require.resolve('resolve-url-loader'),
+                            options: { engine: 'rework' }
+                        }, {
+                            loader: require.resolve('sass-loader'),
+                            options: { sourceMap: true }
                         }]
+                    },
+                    {
+                        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+                        loader: require.resolve('url-loader'),
+                        options: {
+                            limit: 10000
+                        }
                     }]
                 },
                 output: {
