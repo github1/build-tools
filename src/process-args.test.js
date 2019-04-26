@@ -4,11 +4,14 @@ describe('when a process is passed', () => {
     it('extracts the arguments', () => {
         const args = processArgs({
             argv: [ 'bin/node',
-                'foo.js',
+                '-something',
                 'a',
-                'b' ]
+                '--somethingElse',
+                'b',
+                '-foo' ]
         });
-        expect(args[0]).toEqual('a');
-        expect(args[1]).toEqual('b');
+        expect(args.something).toEqual('a');
+        expect(args.somethingElse).toEqual('b');
+        expect(args.foo).toEqual(true);
     });
 });

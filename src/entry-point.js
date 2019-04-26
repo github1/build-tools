@@ -7,13 +7,13 @@ const rimraf = require('rimraf');
 const getPort = require('get-port');
 const processArgs = require('./process-args');
 const open = require('open');
+const nodeExternals = require('webpack-node-externals');
 
 module.exports = (tools, packageJsonLoader, process, outerExit) => {
     return new Promise(resolve => {
 
         const workDir = process.cwd();
         const args = processArgs(process);
-
         const buildKey = new Buffer(crypto
             .createHash('md5')
             .update(workDir)
@@ -85,7 +85,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 chunkFilename: "[id].css"
             });
             const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
-            return {
+            const webpackConfig = {
                 context: workDir,
                 entry: {
                     main: [
@@ -174,6 +174,27 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 ],
                 devtool: process.env.NODE_ENV === 'production' ? false : 'source-map'
             };
+            if (args.entry) {
+                webpackConfig.entry = args.entry.split(',').reduce((entries, entry) => {
+                    const name = entry.split(':')[0];
+                    const path =  entry.split(':')[1];
+                    if (name.trim().length > 0) {
+                        entries[name] = path;
+                    }
+                    return entries;
+                }, {});
+            }
+            if (args.nodeExternals) {
+                webpackConfig.externals.unshift(nodeExternals())
+            }
+            if (args.outputDir) {
+                webpackConfig.output = {};
+                webpackConfig.output.path = path.join(workDir, args.outputDir);
+            }
+            if (args.outputFilename) {
+                webpackConfig.output.filename = args.outputFilename;
+            }
+            return webpackConfig;
         };
 
         /**
@@ -283,7 +304,11 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                             }
                         });
                     } else {
-                        Promise.all(['webpack-server', 'webpack'].map(task => {
+                        const tasks = ['webpack'];
+                        if (fs.existsSync(path.join(workDir, 'server.js'))) {
+                            tasks.push('webpack-server');
+                        }
+                        Promise.all(tasks.map(task => {
                             return new Promise((resolve) => {
                                 runTask(task, (status) => {
                                     resolve(status);
@@ -357,16 +382,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                                 .replace(/\$BABEL_JEST/, require.resolve('babel-jest'));
                             fs.writeFileSync(jestTransform, jestTransformContent);
                             fs.writeFileSync(jestConfigFile, JSON.stringify(jestConfig));
-                            let prevFlag;
-                            const jestCLIArgs = args.reduce((jestArgs, arg) => {
-                                if (/^-/.test(arg)) {
-                                    prevFlag = arg.replace(/^[-]+/, '');
-                                    jestArgs[prevFlag] = true;
-                                } else if (prevFlag) {
-                                    jestArgs[prevFlag] = arg;
-                                }
-                                return jestArgs;
-                            }, {});
+                            const jestCLIArgs = args;
                             jestCLIArgs.config = jestConfigFile;
                             const jestResult = jest.runCLI(jestCLIArgs, [workDir]);
                             if (jestResult && jestResult.then) {
@@ -398,7 +414,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
             }
         };
 
-        runTask(args[0]);
+        runTask(args.task);
 
     }).then(result => {
         if (result && result.handler) {
@@ -414,3 +430,5 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         outerExit(status);
     });
 };
+
+
