@@ -1,7 +1,7 @@
 {
   "name": "@common/build-tools",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -15,6 +15,10 @@
   "keywords": [],
   "author": "John Collier <john.collier4@gmail.com>",
   "license": "MIT",
+  "jest": {
+    "verbose": false,
+    "testURL": "http://localhost/"
+  },
   "dependencies": {
     "@common/app-server": "0.0.0",
     "@common/inkscape-util": "0.0.0",
