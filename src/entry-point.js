@@ -461,7 +461,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
             }
         };
 
-        runTask(args.task);
+        runTask(args.task, exit);
 
     }).then(result => {
         if (result && result.handler) {
