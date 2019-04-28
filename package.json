@@ -1,7 +1,7 @@
 {
-  "name": "@common/build-tools",
-  "private": true,
-  "version": "0.0.10",
+  "name": "@github1/build-tools",
+  "private": false,
+  "version": "0.0.11",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -20,8 +20,7 @@
     "testURL": "http://localhost/"
   },
   "dependencies": {
-    "@github1/app-server": "0.0.10",
-    "@common/inkscape-util": "0.0.0",
+    "@github1/app-server": "0.0.11",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
@@ -71,6 +70,9 @@
     "webpack-dev-middleware": "^3.1.2",
     "webpack-hot-middleware": "^2.21.2",
     "webpack-node-externals": "^1.7.2"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": [],
   "repository": {
