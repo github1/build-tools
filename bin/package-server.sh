@@ -42,7 +42,7 @@ function installRuntimeDependencies() {
   STRIPPED_PACKAGE="$(head -n 3 package.json)$(sed -E 's/\"@(franklin|common).*//g' <(tail -n +3 package.json) | awk 'NF')"
   echo "${STRIPPED_PACKAGE}" > target/dist/public/package.json
   cd target/dist/public
-  npm install --loglevel=verbose
+  npm install --production --loglevel=verbose
   cd -
 }
 
