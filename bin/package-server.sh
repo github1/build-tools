@@ -18,11 +18,15 @@ function clean() {
 function installAppServer() {
   echo "Installing appServer"
   mkdir -p target/dist/public/app-server
-  cp -R ../../packages/app-server/assets target/dist/public/app-server/assets
-  cp -R ../../packages/app-server/bin target/dist/public/app-server/bin
-  cp -R ../../packages/app-server/src target/dist/public/app-server/src
-  cp -R ../../packages/app-server/templates target/dist/public/app-server/templates
-  cp ../../packages/app-server/package.json target/dist/public/app-server/package.json
+  APP_SERVER_BASE=../../node_modules/@github1/app-server
+  if [[ ! -d "${APP_SERVER_BASE}" ]]; then
+    APP_SERVER_BASE=../../packages/app-server
+  fi
+  cp -R "${APP_SERVER_BASE}/assets" target/dist/public/app-server/assets
+  cp -R "${APP_SERVER_BASE}/bin" target/dist/public/app-server/bin
+  cp -R "${APP_SERVER_BASE}/src" target/dist/public/app-server/src
+  cp -R "${APP_SERVER_BASE}/templates" target/dist/public/app-server/templates
+  cp "${APP_SERVER_BASE}/package.json" target/dist/public/app-server/package.json
   cd target/dist/public/app-server
   npm install --production --loglevel=verbose
   cd -
