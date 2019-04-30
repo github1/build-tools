@@ -1,18 +1,18 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "",
   "main": "index.js",
   "bin": {
     "build-tools-build-lib": "bin/build-lib.sh",
     "build-tools": "bin/cli.js",
-    "build-tools-package-server": "bin/package-server.sh",
-    "prepublishOnly": "./prepare.sh"
+    "build-tools-package-server": "bin/package-server.sh"
   },
   "scripts": {
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepublishOnly": "./prepare.sh"
   },
   "keywords": [],
   "author": "John Collier <john.collier4@gmail.com>",
@@ -22,7 +22,7 @@
     "testURL": "http://localhost/"
   },
   "dependencies": {
-    "@github1/app-server": "0.0.17",
+    "@github1/app-server": "0.0.18",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
