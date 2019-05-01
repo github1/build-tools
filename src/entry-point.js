@@ -153,13 +153,13 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                             options: { sourceMap: true }
                         }]
                     },
-                    {
-                        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-                        loader: require.resolve('url-loader'),
-                        options: {
-                            limit: 10000
-                        }
-                    }]
+                        {
+                            test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+                            loader: require.resolve('url-loader'),
+                            options: {
+                                limit: 10000
+                            }
+                        }]
                 },
                 output: {
                     library: packageJson.name,
@@ -280,8 +280,8 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     app.use(webpackHotMiddleware(compiler));
                     open(serverUrl, { app: ['google chrome'] })
                         .catch(err => {
-                        // ignore
-                    });
+                            // ignore
+                        });
                 }
             };
         };
@@ -317,6 +317,9 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     break;
                 }
                 case 'devserver': {
+
+                    require('./load-cjs-dist.js');
+
                     appServer([
                         path.join(workDir, 'server.js'),
                         path.join(workDir, 'server.mock.js'),
