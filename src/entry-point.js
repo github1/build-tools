@@ -318,7 +318,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 }
                 case 'devserver': {
 
-                    require('./load-cjs-dist.js');
+                    require('./load-cjs-dist.js').init();
 
                     appServer([
                         path.join(workDir, 'server.js'),
