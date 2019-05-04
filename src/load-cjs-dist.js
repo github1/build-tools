@@ -14,8 +14,8 @@ const resolveEs5Dist = function (requireName, cjsDist, requireReference, exists)
         if (parts.indexOf('es5') < 0) {
             parts.splice(2, 0, 'es5');
         }
-        cjsDist[name] = parts.join('/');
-        return cjsDist[name];
+        cjsDist[requireName] = parts.join('/');
+        return cjsDist[requireName];
     }
 };
 
@@ -31,8 +31,12 @@ module.exports = {
                 name = cjsDist[name];
             } else if (name.indexOf('@') > -1) {
                 try {
-                    name = resolveEs5Dist(name, cjsDist, require, fs.existsSync.bind(fs));
+                    const resolvedName = resolveEs5Dist(name, cjsDist, require, fs.existsSync.bind(fs));
+                    if (resolvedName) {
+                        name = resolvedName;
+                    }
                 } catch (err) {
+                    console.log(err);
                 }
             }
             return originalRequire.apply(this, [name]);
