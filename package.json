@@ -1,7 +1,7 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.0.29",
+  "version": "0.0.31",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -22,7 +22,7 @@
     "testURL": "http://localhost/"
   },
   "dependencies": {
-    "@github1/app-server": "0.0.29",
+    "@github1/app-server": "0.0.31",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
