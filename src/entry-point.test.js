@@ -46,7 +46,7 @@ describe('when the entry point is called', () => {
                 cwd: () => '/tmp/foo',
                 env: {},
                 argv: ['bin/node',
-                    'foo.js', 'devserver']
+                    'foo.js', 'devserver', '--open', 'false']
             };
         });
         it('runs the devserver', () => {
