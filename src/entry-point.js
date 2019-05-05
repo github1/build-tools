@@ -8,7 +8,6 @@ const getPort = require('get-port');
 const processArgs = require('./process-args');
 const open = require('open');
 const nodeExternals = require('webpack-node-externals');
-const esm = require('esm')(module);
 
 module.exports = (tools, packageJsonLoader, process, outerExit) => {
     return new Promise(resolve => {
@@ -305,11 +304,16 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
          * Prepare appServerExtensions
          */
         const prepareAppServerExtensions = (addl) => {
+            const esm = require('esm')(module, { mode: "all", cjs: true });
             let common = [
                 path.join(workDir, 'server.mock.js'),
                 path.join(workDir, 'server.js')]
                 .filter((script) => fs.existsSync(script))
-                .map((script) => esm(script));
+                .map((script) => {
+                    console.log(chalk.blue('[build-tools]') + ' Applying server extension:\n\t' + chalk.green(script));
+                    const extension = esm(script);
+                    return extension.default ? extension.default : extension;
+                });
             common.push(prepareWebpackDevServerExtension());
             if (Array.isArray(addl)) {
                 common = common.concat(addl);
@@ -473,7 +477,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                                 prepareAppServerExtensions(
                                     jestRunExtension(port, testURL)
                                 )
-                            , port);
+                                , port);
                         });
                     }
                     break;
