@@ -1,6 +1,6 @@
 # @github1/build-tools
 
-Common tools for building webpack projects.
+Wrapper for webpack, jest and other dev tools
 
 [![build status](https://img.shields.io/travis/github1/build-tools/master.svg?style=flat-square)](https://travis-ci.org/github1/build-tools)
 [![npm version](https://img.shields.io/npm/v/@github1/build-tools.svg?style=flat-square)](https://www.npmjs.com/package/@github1/build-tools)
