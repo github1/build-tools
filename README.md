@@ -2,12 +2,12 @@
 
 Common tools for building webpack projects.
 
-# Install
+## Install
 ```shell
 npm install @github1/build-tools --save-dev
 ```
 
-# Usage
+## Usage
 
 ```json
 {
@@ -21,6 +21,6 @@ npm install @github1/build-tools --save-dev
 }
 ```
 
-# License
+## License
 
-TBD
+[MIT](LICENSE.md)
