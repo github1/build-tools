@@ -2,7 +2,7 @@
   "name": "@github1/build-tools",
   "private": false,
   "version": "0.0.0",
-  "description": "",
+  "description": "Common tools for building webpack projects",
   "main": "index.js",
   "bin": {
     "build-tools-build-lib": "bin/build-lib.sh",
