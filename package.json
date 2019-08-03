@@ -8,7 +8,7 @@
     "build-tools-build-lib": "bin/build-lib.sh",
     "build-tools": "bin/cli.js",
     "build-tools-package-server": "bin/package-server.sh",
-    "prepublishOnly": "./prepublish.sh"
+    "prepublishOnly": "./prepare.sh"
   },
   "scripts": {
     "test": "jest",
