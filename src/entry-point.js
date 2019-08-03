@@ -61,7 +61,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
             ].map(resolveBabelModules),
             plugins: [
                 'babel-plugin-closure-elimination',
-                'babel-plugin-transform-remove-strict-mode'
+                'babel-plugin-transform-remove-strict-mode',
+                ['babel-plugin-inline-import', {
+                    extensions: [
+                        '.inline.test.js'
+                    ]
+                }]
             ].map(resolveBabelModules)
         };
 
@@ -280,6 +285,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                                 moduleFileExtensions: ['js', 'json'],
                                 moduleDirectories: ['node_modules'],
                                 collectCoverageFrom: ['src/**/*.{js,jsx}'],
+                                watchPathIgnorePatterns: ['dist', 'target'],
                                 moduleNameMapper: {
                                     "\\.(css|less|sass|scss)$": __dirname + '/__mocks__/style-mock.js'
                                 },
