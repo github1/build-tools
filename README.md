@@ -2,6 +2,8 @@
 
 Common tools for building webpack projects.
 
+[badges]
+
 ## Install
 ```shell
 npm install @github1/build-tools --save-dev
@@ -9,18 +11,8 @@ npm install @github1/build-tools --save-dev
 
 ## Usage
 
-```json
-{
-  ...
-  "scripts": {
-    "build": "build-tools-build-lib",
-    "test": "build-tools test --coverage",
-    "test:watch": "build-tools test --watch --coverage"
-  }
-  ...
-}
-```
+TBD
 
 ## License
 
-[MIT](LICENSE.md)
+[license]
