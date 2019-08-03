@@ -11,7 +11,7 @@ rm -rf "${DIST}"
 
 if [[ -f "tsconfig.json" ]]; then
     TSC=$(dirname $(dirname $(node -p "require.resolve('typescript')")))/bin/tsc
-    "${TSC}" --pretty --project tsconfig.json
+    "${TSC}" --pretty --project tsconfig.json --outDir "${DIST}"
     "${TSC}" --pretty --project tsconfig.json --module "commonjs" --outDir "${DIST}/es5"
 else
     IGNORE="src/**/*.test.js"
