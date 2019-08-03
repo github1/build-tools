@@ -78,6 +78,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
          * Prepares the webpack config.
          */
         const prepareWebpackConfig = () => {
+            const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
             const MiniCssExtractPlugin = require('mini-css-extract-plugin');
             const extractLess = new MiniCssExtractPlugin({
                 filename: "assets/[name].css",
@@ -102,6 +103,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     minimize: process.env.NODE_ENV === 'production'
                 },
                 plugins: [
+                    new BundleAnalyzerPlugin(),
                     extractLess
                 ],
                 module: {
