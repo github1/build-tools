@@ -18,6 +18,8 @@
   "dependencies": {
     "@common/app-server": "0.0.0",
     "@common/inkscape-util": "0.0.0",
+    "@types/jest": "^24.0.9",
+    "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
     "babel-core": "^6.26.0",
     "babel-jest": "^22.4.3",
@@ -50,6 +52,9 @@
     "rimraf": "^2.6.2",
     "sass-loader": "^7.0.1",
     "style-loader": "^0.20.3",
+    "ts-jest": "^23.10.5",
+    "tsutils": "~2.7.1",
+    "typescript": "3.3.3",
     "webpack": "^4.5.0",
     "webpack-dev-middleware": "^3.1.2",
     "webpack-hot-middleware": "^2.21.2",
