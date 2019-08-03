@@ -1,18 +1,25 @@
 require('regenerator-runtime/runtime');
 const fs = require('fs');
 const stringify = require('json-stringify-safe');
+const renderToJson = require('react-render-to-json').default;
 
 global.findJson = (json, func, matches) => {
     matches = matches || [];
-    if (func({
+    if (Array.isArray(json)) {
+        json.forEach(item => findJson(renderToJson(item), func, matches));
+    } else {
+        if (func({
             attributes: {},
             ...json
         })) {
-        matches.push(json);
+            matches.push(json);
+        }
+        (json.children || [])
+            .filter(child => child !== null)
+            .forEach(child => {
+                findJson(child, func, matches);
+            });
     }
-    (json.children || []).forEach(child => {
-        findJson(child, func, matches);
-    });
     return matches;
 };
 
