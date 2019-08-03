@@ -3,16 +3,20 @@
 set -e
 
 function verify() {
+  echo "Verifying"
   npm run -s test
+  npm run -s lint
 }
 
 function clean() {
+  echo "Cleaning"
   mkdir -p target/dist/public
   rm -rf target/dist/public/*
-  rm target/dist/*.tar.gz
+  rm -rf target/dist/*.tar.gz
 }
 
 function installAppServer() {
+  echo "Installing appServer"
   mkdir -p target/dist/public/app-server
   cp -R ../../packages/app-server/assets target/dist/public/app-server/assets
   cp -R ../../packages/app-server/bin target/dist/public/app-server/bin
@@ -20,32 +24,45 @@ function installAppServer() {
   cp -R ../../packages/app-server/templates target/dist/public/app-server/templates
   cp ../../packages/app-server/package.json target/dist/public/app-server/package.json
   cd target/dist/public/app-server
-  npm install --production
+  npm install --production --loglevel=verbose
   cd -
 }
 
 function bundle() {
+  echo "Bundling"
   NODE_ENV=production ./node_modules/.bin/build-tools bundle
 }
 
 function installRuntimeDependencies() {
-  STRIPPED_PACKAGE="$(head -n 3 package.json)$(sed 's/\"@common.*//g' <(tail -n +3 package.json) | awk 'NF')"
+  echo "Installing runtime dependencies"
+  STRIPPED_PACKAGE="$(head -n 3 package.json)$(sed -E 's/\"@(franklin|common).*//g' <(tail -n +3 package.json) | awk 'NF')"
   echo "${STRIPPED_PACKAGE}" > target/dist/public/package.json
   cd target/dist/public
-  npm install
+  npm install --loglevel=verbose
   cd -
 }
 
 function copyAssets() {
-  cp -R assets/ target/dist/public/assets/
+  echo "Copying assets"
+  if [[ -d assets/ ]]; then
+    cp -R assets/ target/dist/public/assets/
+  fi
 }
 
 function createArchive() {
-  ARCHIVE_NAME="target/dist/$(cat target/dist/public/package.json | jq -r .name | sed -E 's/@([a-z]+)\///g').tar.gz"
+  if [[ -z "${PACKAGE_NAME}" ]]; then
+    PACKAGE_NAME=$(cat target/dist/public/package.json | jq -r .name | sed -E 's/@([a-z]+)\///g')
+  fi
+  if [[ -n "${PROJECT_VERSION}" ]]; then
+    PACKAGE_NAME="${PACKAGE_NAME}-${PROJECT_VERSION}"
+  fi
+  ARCHIVE_NAME="target/dist/${PACKAGE_NAME}.tar.gz"
+  echo "Creating archive ${ARCHIVE_NAME}"
   tar -czvf "${ARCHIVE_NAME}" -C target/dist/public .
+  echo "Created archive ${ARCHIVE_NAME}"
 }
 
-echo "Packaging $(cat target/dist/public/package.json | jq -r .name)"
+echo "Packaging $(cat package.json | jq -r .name)"
 
 verify
 clean
