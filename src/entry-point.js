@@ -100,6 +100,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 ],
                 module: {
                     rules: [{
+                        test: /\.inline.*jsx?$/,
+                        exclude: /(node_modules)/,
+                        use: {
+                            loader: require.resolve('raw-loader')
+                        }
+                    }, {
                         test: /\.js$/,
                         exclude: /(node_modules)/,
                         use: {
