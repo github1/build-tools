@@ -3,4 +3,4 @@
 DIST="./dist"
 rm -rf "${DIST}"
 mkdir -p "${DIST}"
-cp -R bin config src package.json "${DIST}/"
+cp -Rv bin config src package.json "${DIST}/"

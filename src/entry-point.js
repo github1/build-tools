@@ -8,6 +8,7 @@ const getPort = require('get-port');
 const processArgs = require('./process-args');
 const open = require('open');
 const nodeExternals = require('webpack-node-externals');
+const esm = require('esm')(module);
 
 module.exports = (tools, packageJsonLoader, process, outerExit) => {
     return new Promise(resolve => {
@@ -103,7 +104,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     minimize: process.env.NODE_ENV === 'production'
                 },
                 plugins: [
-                    new BundleAnalyzerPlugin(),
+                    //new BundleAnalyzerPlugin(),
                     extractLess
                 ],
                 module: {
@@ -127,12 +128,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         }, {
                             loader: require.resolve('css-loader')
                         }, {
-                            loader: require.resolve('less-loader')
-                        }, {
                             loader: require.resolve('postcss-loader'),
                             options: {
                                 plugins: postCssPlugins
                             }
+                        }, {
+                            loader: require.resolve('less-loader')
                         }]
                     }, {
                         test: /\.(scss|sass)$/,
@@ -147,10 +148,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                             }
                         }, {
                             loader: require.resolve('resolve-url-loader'),
-                            options: { engine: 'rework' }
+                            options: {engine: 'rework'}
                         }, {
                             loader: require.resolve('sass-loader'),
-                            options: { sourceMap: true }
+                            options: {sourceMap: true}
                         }]
                     },
                         {
@@ -180,7 +181,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
             if (args.entry) {
                 webpackConfig.entry = args.entry.split(',').reduce((entries, entry) => {
                     const name = entry.split(':')[0];
-                    const path =  entry.split(':')[1];
+                    const path = entry.split(':')[1];
                     if (name.trim().length > 0) {
                         entries[name] = path;
                     }
@@ -278,12 +279,44 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         publicPath: webpackConfig.output.publicPath
                     }));
                     app.use(webpackHotMiddleware(compiler));
-                    open(serverUrl, { app: ['google chrome'] })
-                        .catch(err => {
-                            // ignore
-                        });
                 }
             };
+        };
+
+        /**
+         * Prepare openBrowserDevServerExtension
+         */
+        const prepareOpenBrowserDevServerExtension = () => {
+            return {
+                onStart: function (context) {
+                    const shouldOpen = typeof args.open === 'undefined' || args.open === true;
+                    if (shouldOpen) {
+                        const serverUrl = `http://localhost:${context.port}`;
+                        open(serverUrl, {app: ['google chrome']})
+                            .catch(err => {
+                                // ignore
+                            });
+                    }
+                }
+            };
+        };
+
+        /**
+         * Prepare appServerExtensions
+         */
+        const prepareAppServerExtensions = (addl) => {
+            let common = [
+                path.join(workDir, 'server.mock.js'),
+                path.join(workDir, 'server.js')]
+                .filter((script) => fs.existsSync(script))
+                .map((script) => esm(script));
+            common.push(prepareWebpackDevServerExtension());
+            if (Array.isArray(addl)) {
+                common = common.concat(addl);
+            } else {
+                common.push(addl);
+            }
+            return common;
         };
 
         /**
@@ -317,14 +350,11 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     break;
                 }
                 case 'devserver': {
-
-                    require('./load-cjs-dist.js').init();
-
-                    appServer([
-                        path.join(workDir, 'server.js'),
-                        path.join(workDir, 'server.mock.js'),
-                        prepareWebpackDevServerExtension()
-                    ]);
+                    appServer(
+                        prepareAppServerExtensions(
+                            prepareOpenBrowserDevServerExtension()
+                        )
+                    );
                     keepRunning();
                     break;
                 }
@@ -374,8 +404,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     exitToUse(report.errorCount + report.warningCount > 0 ? 1 : 0);
                     break;
                 }
-                case 'test':
-                {
+                case 'test': {
                     const jestRunExtension = (port, testURL) => ({
                         onStart: () => {
                             const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
@@ -396,7 +425,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                                 transform: {
                                     "^.+\\.js$": jestTransform,
                                     "^.+\\.ts$": 'ts-jest'
-                                }
+                                },
+                                transformIgnorePatterns: [
+                                    "/node_modules/(?!@github1).+$",
+                                    ".*react\-githubish.*",
+                                    ".*react\-portal.*"
+                                ]
                             };
                             jestConfig.setupFiles = [require.resolve('./jest-helpers.js')];
                             if (fs.existsSync(path.join(workDir, 'jestSetup.js'))) {
@@ -435,12 +469,11 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     } else {
                         getPort().then(port => {
                             const testURL = `http://localhost:${port}/`;
-                            appServer([
-                                path.join(workDir, 'server.mock.js'),
-                                path.join(workDir, 'server.js'),
-                                prepareWebpackDevServerExtension(),
-                                jestRunExtension(port, testURL)
-                            ], port);
+                            appServer(
+                                prepareAppServerExtensions(
+                                    jestRunExtension(port, testURL)
+                                )
+                            , port);
                         });
                     }
                     break;
