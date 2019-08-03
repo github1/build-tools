@@ -2,7 +2,7 @@
 
 const entry = require('../src/entry-point');
 const webpack = require('webpack');
-const appServer = require('@common/app-server');
+const appServer = require('@github1/app-server');
 const jest = require('jest-cli');
 
 entry({

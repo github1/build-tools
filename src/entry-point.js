@@ -72,7 +72,6 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         };
 
         require('ignore-styles').default(['.less']);
-
         require('babel-core/register')(babelOptions);
 
         /**
@@ -85,6 +84,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 chunkFilename: "[id].css"
             });
             const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
+            const postCssPlugins = [require('autoprefixer')];
+            if (process.env.NODE_ENV === 'production') {
+                postCssPlugins.push(require('cssnano')({
+                    preset: 'default'
+                }));
+            }
             const webpackConfig = {
                 context: workDir,
                 entry: {
@@ -124,9 +129,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         }, {
                             loader: require.resolve('postcss-loader'),
                             options: {
-                                plugins: [
-                                    require('autoprefixer')
-                                ]
+                                plugins: postCssPlugins
                             }
                         }]
                     }, {
@@ -138,9 +141,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         }, {
                             loader: require.resolve('postcss-loader'),
                             options: {
-                                plugins: [
-                                    require('autoprefixer')
-                                ]
+                                plugins: postCssPlugins
                             }
                         }, {
                             loader: require.resolve('resolve-url-loader'),
@@ -220,6 +221,11 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                             loader: require.resolve('babel-loader'),
                             options: babelOptions
                         }
+                    }, {
+                        test: /\.(less|scss)$/,
+                        use: {
+                            loader: require.resolve('null-loader')
+                        }
                     }]
                 },
                 output: {
@@ -284,13 +290,11 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         const runTask = (task, exitToUse) => {
             switch (task) {
                 case 'build':
-                case 'bundle':
-                {
+                case 'bundle': {
                     const hasTsConfig = fs.existsSync(path.join(workDir, 'tsconfig.json'));
-                    if (hasTsConfig)
-                    {
+                    if (hasTsConfig) {
                         const exec = require('child_process').exec;
-                        const tscBin = path.resolve(require.resolve('typescript'),'../../bin/tsc');
+                        const tscBin = path.resolve(require.resolve('typescript'), '../../bin/tsc');
                         const compiler = `${tscBin} -p tsconfig.json`;
                         exec(compiler, {
                             cwd: workDir
@@ -320,24 +324,67 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     }
                     break;
                 }
-                case 'webpack-server':
-                {
+                case 'webpack-server': {
                     runWebpack(prepareWebpackConfigServer, exitToUse);
                     break;
                 }
-                case 'webpack':
-                {
+                case 'webpack': {
                     runWebpack(prepareWebpackConfig, exitToUse);
                     break;
                 }
-                case 'devserver':
-                {
+                case 'devserver': {
                     appServer([
                         path.join(workDir, 'server.js'),
                         path.join(workDir, 'server.mock.js'),
                         prepareWebpackDevServerExtension()
                     ]);
                     keepRunning();
+                    break;
+                }
+                case 'lint': {
+                    const CLIEngine = require('eslint').CLIEngine;
+                    const cli = new CLIEngine({
+                        baseConfig: {
+                            extends: [
+                                'eslint:recommended',
+                                'plugin:react/recommended'
+                            ],
+                            settings: {
+                                react: {
+                                    version: '16.0'
+                                }
+                            }
+                        },
+                        envs: ['node', 'browser', 'es6'],
+                        fix: true,
+                        useEslintrc: false,
+                        parser: 'babel-eslint',
+                        parserOptions: {
+                            ecmaVersion: 6,
+                            sourceType: 'module',
+                            ecmaFeatures: {
+                                jsx: true,
+                                arrowFunctions: true
+                            }
+                        },
+                        plugins: ['react'],
+                        rules: {
+                            "react/display-name": 0,
+                            "react/prop-types": 0
+                        },
+                        ignorePattern: 'src/**/*.test.js'
+                    });
+                    const report = cli.executeOnFiles(['src/']);
+                    report.results.forEach(file => {
+                        if (file.messages.length > 0) {
+                            console.log(chalk.magenta('[eslint]') + ' ' + chalk.black(file.filePath));
+                            file.messages.forEach(message => {
+                                const chalkColor = ['green', 'orange', 'red'][message.severity];
+                                console.log('  ' + (message.ruleId ? '[' + chalk[chalkColor](message.ruleId) + '] ' : '') + message.message + ' ' + chalk.blue('(line: ' + message.line + ', column: ' + message.column + ')'));
+                            });
+                        }
+                    });
+                    exitToUse(report.errorCount + report.warningCount > 0 ? 1 : 0);
                     break;
                 }
                 case 'test':
@@ -430,5 +477,3 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         outerExit(status);
     });
 };
-
-
