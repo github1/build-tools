@@ -5,8 +5,10 @@
   "description": "",
   "main": "index.js",
   "bin": {
+    "build-tools-build-lib": "bin/build-lib.sh",
     "build-tools": "bin/cli.js",
-    "build-tools-package-server": "bin/package-server.sh"
+    "build-tools-package-server": "bin/package-server.sh",
+    "prepublishOnly": "./prepublish.sh"
   },
   "scripts": {
     "test": "jest",
@@ -25,6 +27,7 @@
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
     "cssnano": "4.1.7",
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-eslint": "10.0.1",
     "babel-jest": "^22.4.3",

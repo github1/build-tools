@@ -293,37 +293,19 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
             switch (task) {
                 case 'build':
                 case 'bundle': {
-                    const hasTsConfig = fs.existsSync(path.join(workDir, 'tsconfig.json'));
-                    if (hasTsConfig) {
-                        const exec = require('child_process').exec;
-                        const tscBin = path.resolve(require.resolve('typescript'), '../../bin/tsc');
-                        const compiler = `${tscBin} -p tsconfig.json`;
-                        exec(compiler, {
-                            cwd: workDir
-                        }, (error, stdout, stderr) => {
-                            if (error) {
-                                console.log(chalk.red(stdout.toString()));
-                                exit(1);
-                            } else {
-                                console.log(chalk.green('Build complete'));
-                                exit(0);
-                            }
-                        });
-                    } else {
-                        const tasks = ['webpack'];
-                        if (fs.existsSync(path.join(workDir, 'server.js'))) {
-                            tasks.push('webpack-server');
-                        }
-                        Promise.all(tasks.map(task => {
-                            return new Promise((resolve) => {
-                                runTask(task, (status) => {
-                                    resolve(status);
-                                });
-                            });
-                        })).then((statuses) => {
-                            exit(Math.max(...statuses));
-                        });
+                    const tasks = ['webpack'];
+                    if (fs.existsSync(path.join(workDir, 'server.js'))) {
+                        tasks.push('webpack-server');
                     }
+                    Promise.all(tasks.map(task => {
+                        return new Promise((resolve) => {
+                            runTask(task, (status) => {
+                                resolve(status);
+                            });
+                        });
+                    })).then((statuses) => {
+                        exit(Math.max(...statuses));
+                    });
                     break;
                 }
                 case 'webpack-server': {
