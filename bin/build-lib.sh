@@ -26,7 +26,7 @@ else
     rm .babelrc
 fi
 
-MAIN=$(cat package.json | jq -r '.main' | sed 's|dist/||g')
+MAIN=$(cat package.json | jq -r '.main' | sed 's|dist/||g' | sed 's|src/||g')
 cat package.json | jq '.main = "es5/'"${MAIN}"'" | .module = "'"${MAIN}"'"' > "${DIST}/package.json"
 
 if [[ -f "${AUX_PREPARE_SCRIPT}" ]]; then
