@@ -4,6 +4,7 @@
   "version": "0.3.3",
   "description": "Common tools for building webpack projects",
   "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "build-tools-build-lib": "bin/build-lib.sh",
     "build-tools": "bin/cli.js",
@@ -67,6 +68,7 @@
     "sass-loader": "^7.0.1",
     "style-loader": "^0.20.3",
     "ts-jest": "^23.10.5",
+    "ts-loader": "6.0.4",
     "tsutils": "~2.7.1",
     "typescript": "3.3.3",
     "url-loader": "1.1.2",
