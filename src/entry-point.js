@@ -96,7 +96,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 entry: {
                     main: [
                         require.resolve('idempotent-babel-polyfill'),
-                        './src/index.js']
+                        './src/index']
+                },
+                resolve: {
+                  extensions: ['.ts', '.tsx', '.js']
                 },
                 mode: process.env.NODE_ENV || 'development',
                 optimization: {
@@ -108,7 +111,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 ],
                 module: {
                     rules: [{
-                        test: /\.inline.*jsx?$/,
+                        test: /\.inline.*(j|t)sx?$/,
                         exclude: /(node_modules)/,
                         use: {
                             loader: require.resolve('raw-loader')
@@ -120,6 +123,15 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                             loader: require.resolve('babel-loader'),
                             options: babelOptions
                         }
+                    }, {
+                      test: /\.ts(x?)$/,
+                      exclude: /(node_modules)/,
+                      use: [{
+                        loader: require.resolve('babel-loader'),
+                        options: babelOptions
+                      }, {
+                        loader: 'ts-loader'
+                      }]
                     }, {
                         test: /\.less$/,
                         use: [{
