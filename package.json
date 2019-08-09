@@ -1,9 +1,10 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.3.5",
+  "version": "0.3.7",
   "description": "Common tools for building webpack projects",
   "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "build-tools-build-lib": "bin/build-lib.sh",
     "build-tools": "bin/cli.js",
@@ -22,7 +23,7 @@
     "testURL": "http://localhost/"
   },
   "dependencies": {
-    "@github1/app-server": "0.3.5",
+    "@github1/app-server": "0.3.7",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
@@ -67,6 +68,7 @@
     "sass-loader": "^7.0.1",
     "style-loader": "^0.20.3",
     "ts-jest": "^23.10.5",
+    "ts-loader": "6.0.4",
     "tsutils": "~2.7.1",
     "typescript": "3.3.3",
     "url-loader": "1.1.2",
