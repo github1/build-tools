@@ -16,3 +16,5 @@ export declare class DeferredPromise extends Promise<any> {
 export declare function findJson(json : any, func : (json : any) => boolean, matches? : Array<any>) : any;
 
 export declare function withAttribute(key : string, value : any) : (json : any) => boolean;
+
+export declare function log(...things: Array<any>);

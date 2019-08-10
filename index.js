@@ -2,7 +2,7 @@ const fs = require('fs');
 const stringify = require('json-stringify-safe');
 const renderToJson = require('react-render-to-json').default;
 
-exports.findJson = (json, func, matches) => {
+const findJson = (json, func, matches) => {
   matches = matches || [];
   if (Array.isArray(json)) {
     json.forEach(item => findJson(renderToJson(item), func, matches));
@@ -21,6 +21,8 @@ exports.findJson = (json, func, matches) => {
   }
   return matches;
 };
+
+exports.findJson = findJson;
 
 exports.withAttribute = (name, value) => {
   return (node) => {
