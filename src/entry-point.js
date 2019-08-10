@@ -429,9 +429,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                                 rootDir: workDir,
                                 testEnvironment: 'jsdom',
                                 testURL: 'http://localhost',
-                                testRegex: '.*\\.test\\.(js|ts)$',
+                                testRegex: '.*\\.test\\.(js|tsx?)$',
                                 globals: {},
-                                moduleFileExtensions: ['js', 'ts', 'json'],
+                                testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+                                moduleFileExtensions: ['js', 'ts', 'tsx', 'json'],
                                 moduleDirectories: ['node_modules'],
                                 collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}'],
                                 watchPathIgnorePatterns: ['dist', 'target'],
@@ -440,7 +441,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                                 },
                                 transform: {
                                     "^.+\\.js$": jestTransform,
-                                    "^.+\\.ts$": 'ts-jest'
+                                    "^.+\\.tsx?$": 'ts-jest'
                                 },
                                 transformIgnorePatterns: [
                                     "/node_modules/(?!@github1).+$",
