@@ -1,7 +1,7 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.0.0",
+  "version": "0.3.17",
   "description": "Common tools for building webpack projects",
   "main": "index.js",
   "types": "index.d.ts",
@@ -16,14 +16,14 @@
     "prepublishOnly": "./prepare.sh"
   },
   "keywords": [],
-  "author": "",
-  "license": "",
+  "author": "John Collier <john.collier4@gmail.com>",
+  "license": "MIT",
   "jest": {
     "verbose": false,
     "testURL": "http://localhost/"
   },
   "dependencies": {
-    "@github1/app-server": "0.0.0",
+    "@github1/app-server": "0.3.17",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
@@ -80,5 +80,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/github1/build-tools"
   }
 }
