@@ -315,7 +315,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         /**
          * Prepare appServerExtensions
          */
-        const prepareAppServerExtensions = (addl) => {
+        const prepareAppServerExtensions = (opts = {}) => {
             const esm = require('esm')(module, { mode: "all", cjs: true });
             let common = [
                 path.join(workDir, 'server.mock.js'),
@@ -326,11 +326,15 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                     const extension = esm(script);
                     return extension.default ? extension.default : extension;
                 });
-            common.push(prepareWebpackDevServerExtension());
-            if (Array.isArray(addl)) {
-                common = common.concat(addl);
-            } else {
-                common.push(addl);
+            if (opts.devServerExtension !== false) {
+              common.push(prepareWebpackDevServerExtension());
+            }
+            if (opts.withExtensions) {
+              if (Array.isArray(opts.withExtensions)) {
+                common = common.concat(opts.withExtensions);
+              } else {
+                common.push(opts.withExtensions);
+              }
             }
             return common;
         };
@@ -367,9 +371,9 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 }
                 case 'devserver': {
                     appServer(
-                        prepareAppServerExtensions(
-                            prepareOpenBrowserDevServerExtension()
-                        )
+                        prepareAppServerExtensions({
+                          withExtensions: prepareOpenBrowserDevServerExtension()
+                        })
                     );
                     keepRunning();
                     break;
@@ -487,9 +491,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                         getPort().then(port => {
                             const testURL = `http://localhost:${port}/`;
                             appServer(
-                                prepareAppServerExtensions(
-                                    jestRunExtension(port, testURL)
-                                )
+                                prepareAppServerExtensions({
+                                  devServerExtension: false,
+                                  withExtensions: jestRunExtension(port, testURL)
+                                })
                                 , port);
                         });
                     }

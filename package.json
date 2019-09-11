@@ -1,7 +1,7 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.3.8",
+  "version": "0.3.18",
   "description": "Common tools for building webpack projects",
   "main": "index.js",
   "types": "index.d.ts",
@@ -23,7 +23,7 @@
     "testURL": "http://localhost/"
   },
   "dependencies": {
-    "@github1/app-server": "0.3.8",
+    "@github1/app-server": "0.3.18",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
