@@ -16,7 +16,7 @@ module.exports = process => {
     }
     return processArgs.reduce((args, arg) => {
         if (/^-/.test(arg)) {
-            prevFlag = arg.replace(/^[-]+/, '');
+            prevFlag = toCamel(arg.replace(/^[-]+/, ''));
             args[prevFlag] = true;
         } else if (prevFlag) {
             const argStr = `${arg}`.toLowerCase();
@@ -29,4 +29,11 @@ module.exports = process => {
     }, {
         task: task
     });
+};
+const toCamel = (s) => {
+  return s.replace(/([-_][a-z])/ig, ($1) => {
+    return $1.toUpperCase()
+      .replace('-', '')
+      .replace('_', '');
+  });
 };
