@@ -28,6 +28,9 @@ fi
 
 MAIN=$(cat package.json | jq -r '.main' | sed 's|dist/||g' | sed 's|src/||g')
 cat package.json | jq '.main = "es5/'"${MAIN}"'" | .module = "'"${MAIN}"'"' > "${DIST}/package.json"
+if [[ -d "./bin" ]]; then
+  cp -R ./bin "${DIST}/bin"
+fi
 
 if [[ -f "${AUX_PREPARE_SCRIPT}" ]]; then
   "${AUX_PREPARE_SCRIPT}" "${DIST}/"
