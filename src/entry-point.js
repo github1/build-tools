@@ -14,7 +14,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
 
     const workDir = process.cwd();
     const args = processArgs(process);
-    const buildKey = new Buffer(crypto
+    const buildKey = Buffer.from(crypto
       .createHash('md5')
       .update(workDir)
       .digest('hex'))
