@@ -10,7 +10,6 @@ const findJson = (json, func, matches) => {
         renderToJson(item) : {attributes: item.props}, func, matches)
     });
   } else {
-    console.log(json);
     if (func({
       attributes: {},
       ...json
