@@ -5,8 +5,12 @@ const renderToJson = require('react-render-to-json').default;
 const findJson = (json, func, matches) => {
   matches = matches || [];
   if (Array.isArray(json)) {
-    json.forEach(item => findJson(renderToJson(item), func, matches));
+    json.forEach(item => {
+      findJson(typeof item === 'function' ?
+        renderToJson(item) : {attributes: item.props}, func, matches)
+    });
   } else {
+    console.log(json);
     if (func({
       attributes: {},
       ...json

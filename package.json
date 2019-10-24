@@ -1,7 +1,7 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.3.51",
+  "version": "0.3.52",
   "description": "Common tools for building webpack projects",
   "main": "index.js",
   "types": "index.d.ts",
@@ -20,10 +20,13 @@
   "license": "MIT",
   "jest": {
     "verbose": false,
-    "testURL": "http://localhost/"
+    "testURL": "http://localhost/",
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist"
+    ]
   },
   "dependencies": {
-    "@github1/app-server": "0.3.51",
+    "@github1/app-server": "0.3.52",
     "@types/jest": "^24.0.9",
     "@types/node": "^8.0.17",
     "autoprefixer": "^8.3.0",
