@@ -71,7 +71,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
       ].map(resolveBabelModules)
     };
 
-    require('ignore-styles').default(['.less']);
+    require('ignore-styles').default(['.less','.scss','.css']);
     require('babel-core/register')(babelOptions);
 
     /**
