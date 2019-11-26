@@ -43,7 +43,7 @@ function bundle() {
 
 function installRuntimeDependencies() {
   echo "Installing runtime dependencies"
-  STRIPPED_PACKAGE="$(head -n 3 package.json)$(sed -E 's/\"@(franklin|common).*//g' <(tail -n +3 package.json) | awk 'NF')"
+  STRIPPED_PACKAGE="$(cat package.json | jq 'del(.devDependencies)' | jq '. | delpaths([paths|select(.[1]|tostring|test("@franklin.*"))])')"
   echo "${STRIPPED_PACKAGE}" > target/dist/public/package.json
   cd target/dist/public
   npm install --production --loglevel=verbose
@@ -54,15 +54,6 @@ function copyAssets() {
   echo "Copying assets"
   if [[ -d assets/ ]]; then
     cp -R assets/ target/dist/public/assets/
-  fi
-}
-
-function copyConfig() {
-  echo "Copying service.config.js"
-  if [[ -f "./service.config.js" ]]; then
-    cp ./service.config.js target/dist/public/service.config.js
-  else
-    echo "No service.config.js found in $(pwd)"
   fi
 }
 
@@ -83,7 +74,6 @@ echo "Packaging $(cat package.json | jq -r .name)"
 
 verify
 clean
-copyConfig
 installAppServer
 bundle
 installRuntimeDependencies
