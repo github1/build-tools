@@ -55,6 +55,9 @@ function copyAssets() {
   if [[ -d assets/ ]]; then
     cp -R assets/ target/dist/public/assets/
   fi
+  if [[ -d mockData/ ]]; then
+    cp -R mockData/ target/dist/public/mockData/
+  fi
 }
 
 function createArchive() {
