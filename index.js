@@ -27,14 +27,26 @@ const findJson = (json, func, matches) => {
 
 exports.findJson = findJson;
 
+exports.withKeyValueIn = (name, key, value) => {
+  return (node) => {
+    if (typeof node === 'object') {
+      const source = node[name];
+      if (source && typeof source === 'object') {
+        return typeof value === 'undefined' ?
+          source[key] : (
+            value instanceof RegExp ?
+              value.test(source[key]) :
+              source[key] === value
+          )
+      }
+    }
+    return false;
+  };
+};
+
 exports.withAttribute = (name, value) => {
   return (node) => {
-    return typeof value === 'undefined' ?
-      node.attributes[name] : (
-        value instanceof RegExp ?
-          value.test(node.attributes[name]) :
-          node.attributes[name] === value
-      )
+    return exports.withKeyValueIn('props', name, value)(node) || exports.withKeyValueIn('attributes', name, value)(node)
   };
 };
 
