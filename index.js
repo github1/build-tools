@@ -57,19 +57,50 @@ exports.DeferredPromise = {
     opts.onReject = opts.onReject || ((r) => r);
     let storedResolve;
     let storedReject;
-    const promise = new Promise((resolve, reject) => {
-      storedResolve = resolve;
-      storedReject = reject;
-    });
-    promise.forceResolve = value => {
+    let promise = null;
+    const createPromise = () => {
+      promise = new Promise((resolve, reject) => {
+        storedResolve = resolve;
+        storedReject = reject;
+      });
+    };
+    const self = {};
+    self.forceResolve = value => {
+      createPromise();
+      promise.then(opts.onResolve);
       storedResolve(value);
-      return promise.then(opts.onResolve);
     };
-    promise.forceReject = value => {
+    self.forceReject = value => {
+      createPromise();
+      promise.catch(opts.onReject);
       storedReject(value);
-      return promise.then(opts.onReject);
     };
-    return promise;
+    self.then = (handler) => {
+      return new Promise((resolve) => {
+        const waitForDefinition = () => {
+          if (promise) {
+            resolve(promise.then(handler));
+          } else {
+            setTimeout(() => waitForDefinition(),100);
+          }
+        };
+        waitForDefinition();
+      });
+    };
+    self.catch = (handler) => {
+      return new Promise((resolve, reject) => {
+        const waitForDefinition = () => {
+          if (promise) {
+            reject(promise.catch(handler));
+          } else {
+            setTimeout(() => waitForDefinition(),100);
+          }
+        };
+        waitForDefinition();
+      });
+    };
+    self.catch = (handler) => promise.catch(handler);
+    return self;
   }
 };
 
