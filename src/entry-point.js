@@ -492,6 +492,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
               fs.writeFileSync(jestConfigFile, JSON.stringify(jestConfig));
               const jestCLIArgs = args;
               jestCLIArgs.config = jestConfigFile;
+              if (jestCLIArgs.testFile) {
+                // run specific test file
+                jestCLIArgs._ = [jestCLIArgs.testFile];
+              }
               const jestResult = jest.runCLI(jestCLIArgs, [workDir]);
               if (jestResult && jestResult.then) {
                 jestResult.then(res => {
