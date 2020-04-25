@@ -436,7 +436,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           const jestRunExtension = (port, testURL) => ({
             onStart: () => {
               const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
-              const jestConfig = {
+              let jestConfig = {
                 verbose: true,
                 rootDir: workDir,
                 testEnvironment: 'jsdom',
@@ -472,6 +472,16 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
               if (testURL !== undefined) {
                 jestConfig.testURL = testURL;
                 jestConfig.globals.__JEST_MOCK_SERVER__ = testURL;
+              }
+              const jestConfiguratorFile = path.join(workDir, 'jest.config.js');
+              if (fs.existsSync(jestConfiguratorFile)) {
+                const jestConfigurator = require(jestConfiguratorFile);
+                console.log(chalk.blue('[build-tools] ') + chalk.black(`Using ${jestConfiguratorFile}`));
+                if (typeof jestConfigurator === 'function') {
+                  jestConfig = jestConfigurator(jestConfig);
+                } else {
+                  jestConfig = jestConfigurator;
+                }
               }
               const jestConfigFile = path.join(buildCacheDir, 'jest-config.json');
               const jestTransformTemplate = fs.readFileSync(path.join(__dirname, 'jest-transform.tpl')).toString();
