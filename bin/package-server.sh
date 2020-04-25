@@ -58,11 +58,13 @@ function copyAssets() {
 }
 
 function copyConfig() {
+  echo "Copying service.config.js"
   if [[ -f "./service.config.js" ]]; then
-    echo "Copying service.config.js"
     cp ./service.config.js target/dist/public/service.config.js
   else
     echo "No service.config.js found"
+    ls -ltr
+    exit 0
   fi
 }
 
@@ -83,9 +85,9 @@ echo "Packaging $(cat package.json | jq -r .name)"
 
 verify
 clean
+copyConfig
 installAppServer
 bundle
 installRuntimeDependencies
 copyAssets
-copyConfig
 createArchive
