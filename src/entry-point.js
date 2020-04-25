@@ -92,7 +92,6 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         }));
       }
       const styleLoader = process.env.INLINE_STYLE ? require.resolve('style-loader') : MiniCssExtractPlugin.loader;
-      console.log(process.env.INLINE_STYLE);
       const webpackConfig = {
         context: workDir,
         entry: {
