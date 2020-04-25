@@ -80,7 +80,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
     const prepareWebpackConfig = () => {
       const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
       const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-      const extractLess = new MiniCssExtractPlugin({
+      const extractCss = new MiniCssExtractPlugin({
         filename: "assets/[name].css",
         chunkFilename: "[id].css"
       });
@@ -91,6 +91,8 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           preset: 'default'
         }));
       }
+      const styleLoader = process.env.INLINE_STYLE ? require.resolve('style-loader') : MiniCssExtractPlugin.loader;
+      console.log(process.env.INLINE_STYLE);
       const webpackConfig = {
         context: workDir,
         entry: {
@@ -107,7 +109,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         },
         plugins: [
           //new BundleAnalyzerPlugin(),
-          extractLess
+          extractCss
         ],
         module: {
           rules: [{
@@ -135,7 +137,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           }, {
             test: /\.less$/,
             use: [{
-              loader: MiniCssExtractPlugin.loader
+              loader: styleLoader
             }, {
               loader: require.resolve('css-loader')
             }, {
@@ -149,7 +151,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           }, {
             test: /\.(scss|sass)$/,
             use: [{
-              loader: require.resolve('style-loader')
+              loader: styleLoader
             }, {
               loader: require.resolve('css-loader')
             }, {
