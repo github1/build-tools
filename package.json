@@ -2,7 +2,7 @@
   "name": "@github1/build-tools",
   "private": false,
   "version": "0.0.0",
-  "description": "Common tools for building webpack projects",
+  "description": "Wrapper for webpack, jest and other dev tools",
   "main": "index.js",
   "types": "index.d.ts",
   "bin": {
