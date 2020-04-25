@@ -12,12 +12,14 @@ describe('when a process is passed', () => {
                 '--someTrueBoolean',
                 'true',
                 '--someFalseBoolean',
-                'false']
+                'false',
+                '--kebab-case',
+                'works']
         });
         expect(args.something).toEqual('a');
         expect(args.somethingElse).toEqual('b');
         expect(args.foo).toEqual(true);
         expect(args.someTrueBoolean).toEqual(true);
-        expect(args.someFalseBoolean).toEqual(false);
+        expect(args.kebabCase).toEqual('works');
     });
 });
