@@ -20,7 +20,10 @@
   "license": "",
   "jest": {
     "verbose": false,
-    "testURL": "http://localhost/"
+    "testURL": "http://localhost/",
+    "modulePathIgnorePatterns" : [
+      "<rootDir>/dist"
+    ]
   },
   "dependencies": {
     "@github1/app-server": "0.0.0",
