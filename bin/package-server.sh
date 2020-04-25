@@ -18,7 +18,7 @@ function clean() {
 function installAppServer() {
   echo "Installing appServer"
   mkdir -p target/dist/public/app-server
-  APP_SERVER_BASE=../../node_modules/@github1/app-server
+  APP_SERVER_BASE=$(node -p 'const path = require("path"); path.dirname(path.dirname(require.resolve("@github1/app-server")));')
   if [[ ! -d "${APP_SERVER_BASE}" ]]; then
     APP_SERVER_BASE=../../packages/app-server
   fi
