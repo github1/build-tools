@@ -62,9 +62,7 @@ function copyConfig() {
   if [[ -f "./service.config.js" ]]; then
     cp ./service.config.js target/dist/public/service.config.js
   else
-    echo "No service.config.js found"
-    ls -ltr
-    exit 0
+    echo "No service.config.js found in $(pwd)"
   fi
 }
 
