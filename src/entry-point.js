@@ -218,7 +218,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
      */
     const prepareWebpackConfigServer = () => {
       const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
-      return {
+      const config = {
         context: workDir,
         target: 'node',
         entry: {
@@ -250,6 +250,13 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           filename: '[name].js'
         }
       };
+      config.entry = fs.readdirSync(workDir)
+        .filter((file) => /^server\..*js$/.test(file))
+        .reduce((entry, file) => {
+          entry[file.replace(/\.[^.]+$/, '')] = `./${file}`;
+          return entry;
+        }, {});
+      return config;
     };
 
     /**
