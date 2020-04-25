@@ -3,9 +3,13 @@
 set -e
 
 function verify() {
-  echo "Verifying"
-  npm run -s test
-  npm run -s lint
+  if [[ "${TEST}" != "false" ]]; then
+    echo "Verifying"
+    npm run -s test
+    npm run -s lint
+  else
+    echo "Skipping verification"
+  fi
 }
 
 function clean() {
@@ -53,6 +57,15 @@ function copyAssets() {
   fi
 }
 
+function copyConfig() {
+  if [[ -f "./service.config.js" ]]; then
+    echo "Copying service.config.js"
+    cp ./service.config.js target/dist/public/service.config.js
+  else
+    echo "No service.config.js found"
+  fi
+}
+
 function createArchive() {
   if [[ -z "${PACKAGE_NAME}" ]]; then
     PACKAGE_NAME=$(cat target/dist/public/package.json | jq -r .name | sed -E 's/@([a-z]+)\///g')
@@ -74,4 +87,5 @@ installAppServer
 bundle
 installRuntimeDependencies
 copyAssets
+copyConfig
 createArchive
