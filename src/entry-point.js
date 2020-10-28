@@ -491,12 +491,16 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
               fs.writeFileSync(jestTransform, jestTransformContent);
               fs.writeFileSync(jestConfigFile, JSON.stringify(jestConfig));
               const jestCLIArgs = args;
-              jestCLIArgs.config = jestConfigFile;
-              if (jestCLIArgs.testFile) {
-                // run specific test file
-                jestCLIArgs._ = [jestCLIArgs.testFile];
+              if (jestCLIArgs.reporters && !Array.isArray(jestCLIArgs.reporters)) {
+                jestCLIArgs.reporters = [jestCLIArgs.reporters];
               }
-              const jestResult = jest.runCLI(jestCLIArgs, [workDir]);
+              jestCLIArgs.config = jestConfigFile;
+              const testFileToRun = jestCLIArgs.testFile || jestCLIArgs.runTestsByPath;
+              if (testFileToRun) {
+                // run specific test file
+                jestCLIArgs._ = [testFileToRun];
+              }
+              const jestResult = jest.runCLI(jestCLIArgs, [workDir], jestCLIArgs.runTestsByPath);
               if (jestResult && jestResult.then) {
                 jestResult.then(res => {
                   if (res.results && res.results.numFailedTests > 0) {
