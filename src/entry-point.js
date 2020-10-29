@@ -432,6 +432,11 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           exitToUse(report.errorCount + report.warningCount > 0 ? 1 : 0);
           break;
         }
+        case 'run-script': {
+          require('regenerator-runtime/runtime');
+          require(args.script);
+          break;
+        }
         case 'test': {
           const jestRunExtension = (port, testURL) => ({
             onStart: () => {
