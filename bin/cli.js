@@ -25,9 +25,9 @@ if (args[0] !== 'test' && args.filter(arg => /jest-intellij-reporter/.test(arg))
   });
 } else {
   entry({
-    webpack: webpack,
-    appServer: appServer,
-    jest: jest
+    webpack,
+    appServer,
+    jest
   }, (packageJSON) => require(packageJSON), process, (status) => {
     process.exit(status);
   });

@@ -1,16 +1,38 @@
-const path = require('path');
-const fs = require('fs');
-const chalk = require('chalk');
-const crypto = require('crypto');
-const mkdirp = require('mkdirp');
-const rimraf = require('rimraf');
-const getPort = require('get-port');
-const processArgs = require('./process-args');
-const open = require('open');
-const nodeExternals = require('webpack-node-externals');
+import * as path from 'path';
+import * as fs from 'fs';
+import * as crypto from 'crypto';
+import chalk from 'chalk';
+import mkdirp from 'mkdirp';
+import rimraf from 'rimraf';
+import * as getPort from 'get-port';
+import open from 'open';
+import nodeExternals from 'webpack-node-externals';
+import * as webpack from 'webpack';
+import * as express from 'express';
+import { runCLI } from 'jest';
+// tslint:disable-next-line:no-implicit-dependencies
+import { Config as JestConfig } from '@jest/types';
+// tslint:disable-next-line:no-implicit-dependencies
+import { AggregatedResult as JestAggregatedResult } from '@jest/test-result';
+import processArgs from './process-args';
 
-module.exports = (tools, packageJsonLoader, process, outerExit) => {
-  return new Promise(resolve => {
+export interface BuildTools {
+  webpack : typeof webpack;
+  jest : { runCLI: typeof runCLI };
+  appServer : any;
+}
+
+export type ExitHandler = (status? : number) => void;
+
+export interface TaskResult {
+  handler? : ExitHandler;
+}
+
+module.exports = (tools : BuildTools,
+                  packageJsonLoader : (pkg : string) => any,
+                  process : NodeJS.Process,
+                  outerExit : ExitHandler) => {
+  return new Promise((resolve : (value? : TaskResult) => void) => {
 
     const workDir = process.cwd();
     const args = processArgs(process);
@@ -24,34 +46,22 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
     mkdirp.sync(buildCacheDir);
 
     // exit in the context of the promise
-    const exit = status => {
+    const exit = (status : number) => {
       rimraf(buildCacheDir, () => '');
       resolve({
         handler: () => outerExit(status)
       });
     };
 
-    const exitOnFailure = status => {
-      if (status === 0) {
-        return;
-      }
-      exit(status);
-    };
-
     // do not terminate the process
-    const keepRunning = () => resolve();
+    const keepRunning = resolve;
 
-    const webpack = tools.webpack;
-    const appServer = tools.appServer;
-    const jest = tools.jest;
-
-    const resolveBabelModules = entry => {
+    const resolveBabelModules = (entry : any | string[]) => {
       if (Array.isArray(entry)) {
         entry[0] = require.resolve(entry[0]);
-      } else {
-        entry = require.resolve(entry);
+        return entry;
       }
-      return entry;
+      return require.resolve(entry);
     };
 
     const babelOptions = {
@@ -71,18 +81,21 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
       ].map(resolveBabelModules)
     };
 
-    require('ignore-styles').default(['.less','.scss','.css']);
+    require('ignore-styles')
+      .default(['.less', '.scss', '.css']);
+    // tslint:disable-next-line:no-submodule-imports
     require('babel-core/register')(babelOptions);
 
     /**
      * Prepares the webpack config.
      */
-    const prepareWebpackConfig = () => {
-      const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+    const prepareWebpackConfig = () : webpack.Configuration => {
+      // const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+      // tslint:disable-next-line:variable-name
       const MiniCssExtractPlugin = require('mini-css-extract-plugin');
       const extractCss = new MiniCssExtractPlugin({
-        filename: "assets/[name].css",
-        chunkFilename: "[id].css"
+        filename: 'assets/[name].css',
+        chunkFilename: '[id].css'
       });
       const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
       const postCssPlugins = [require('autoprefixer')];
@@ -92,7 +105,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         }));
       }
       const styleLoader = process.env.INLINE_STYLE ? require.resolve('style-loader') : MiniCssExtractPlugin.loader;
-      const webpackConfig = {
+      const webpackConfig : webpack.Configuration = {
         context: workDir,
         entry: {
           main: [
@@ -102,7 +115,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         resolve: {
           extensions: ['.ts', '.tsx', '.js']
         },
-        mode: process.env.NODE_ENV || 'development',
+        mode: (process.env.NODE_ENV || 'development') as any,
         optimization: {
           minimize: process.env.NODE_ENV === 'production'
         },
@@ -112,7 +125,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
         ],
         module: {
           rules: [{
-            test: /\.inline.*(j|t)sx?$/,
+            test: /\.inline.*([jt])sx?$/,
             exclude: /(node_modules)/,
             use: {
               loader: require.resolve('raw-loader')
@@ -181,31 +194,35 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           filename: 'assets/[name].bundle.js'
         },
         externals: [
-          function (context, request, callback) {
+          (context : any, request : any, callback : webpack.ExternalsFunctionCallback) => {
             if (/^@api\//.test(request)) {
-              return callback(null, request);
+              return callback(undefined, request);
             }
             callback();
           }
         ],
-        devtool: process.env.NODE_ENV === 'production' ? false : 'source-map'
+        devtool: (process.env.NODE_ENV === 'production' ? false : 'source-map') as webpack.Options.Devtool
       };
       if (args.entry) {
-        webpackConfig.entry = args.entry.split(',').reduce((entries, entry) => {
-          const name = entry.split(':')[0];
-          const path = entry.split(':')[1];
-          if (name.trim().length > 0) {
-            entries[name] = path;
-          }
-          return entries;
-        }, {});
+        webpackConfig.entry = args.entry.split(',')
+          .reduce((entries : any, entry : string) => {
+            const name = entry.split(':')[0];
+            const path = entry.split(':')[1];
+            if (name.trim().length > 0) {
+              entries[name] = path;
+            }
+            return entries;
+          }, {});
       }
       if (args.nodeExternals) {
-        webpackConfig.externals.unshift(nodeExternals())
+        if (Array.isArray(webpackConfig.externals)) {
+          webpackConfig.externals.unshift(nodeExternals());
+        }
       }
       if (args.outputDir) {
-        webpackConfig.output = {};
-        webpackConfig.output.path = path.join(workDir, args.outputDir);
+        webpackConfig.output = {
+          path: path.join(workDir, args.outputDir)
+        };
       }
       if (args.outputFilename) {
         webpackConfig.output.filename = args.outputFilename;
@@ -216,15 +233,15 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
     /**
      * Prepares the webpack config for server code.
      */
-    const prepareWebpackConfigServer = () => {
+    const prepareWebpackConfigServer = () : webpack.Configuration => {
       const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
-      const config = {
+      const config : webpack.Configuration = {
         context: workDir,
         target: 'node',
         entry: {
           server: './server.js'
         },
-        mode: process.env.NODE_ENV || 'development',
+        mode: (process.env.NODE_ENV || 'development') as any,
         optimization: {
           minimize: false
         },
@@ -250,9 +267,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           filename: '[name].js'
         }
       };
+      // tslint:disable-next-line:non-literal-fs-path
       config.entry = fs.readdirSync(workDir)
-        .filter((file) => /^server\..*js$/.test(file))
-        .reduce((entry, file) => {
+        .filter((file : string) => /^server\..*js$/.test(file))
+        .reduce((entry : any, file : string) => {
           entry[file.replace(/\.[^.]+$/, '')] = `./${file}`;
           return entry;
         }, {});
@@ -262,10 +280,10 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
     /**
      * Runs webpack build.
      */
-    const runWebpack = (prepareWebpackConfig, exitToUse) => {
-      exitToUse = exitToUse || exit;
-      const webpackConfig = prepareWebpackConfig(webpack, workDir, packageJsonLoader, process);
-      webpack(webpackConfig, (err, stats) => {
+    const runWebpack = (prepareWebpackConfig : () => webpack.Configuration, exitHandler? : ExitHandler) => {
+      const exitToUse : ExitHandler = exitHandler || exit;
+      const webpackConfig = prepareWebpackConfig();
+      webpack(webpackConfig, (err : Error, stats : webpack.Stats) => {
         console.log(stats.toString({
           colors: true
         }));
@@ -282,7 +300,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
      */
     const prepareWebpackDevServerExtension = () => {
       return {
-        onSetup: (app, context) => {
+        onSetup: (app : express.Application, context : { port : number }) => {
           if (process.env.NO_WEBPACK) {
             return;
           }
@@ -291,8 +309,8 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           const webpackHotMiddleware = require('webpack-hot-middleware');
           const webpackConfig = prepareWebpackConfig();
           webpackConfig.output.publicPath = `http://localhost:${context.port}/`;
-          webpackConfig.entry.main.unshift(`webpack-hot-middleware/client?path=${serverUrl}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`);
-          webpackConfig.plugins.unshift(new webpack.HotModuleReplacementPlugin());
+          ((webpackConfig.entry as webpack.Entry).main as string[]).unshift(`webpack-hot-middleware/client?path=${serverUrl}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`);
+          webpackConfig.plugins.unshift(new tools.webpack.HotModuleReplacementPlugin());
           const compiler = webpack(webpackConfig);
           app.use(webpackDevMiddleware(compiler, {
             publicPath: webpackConfig.output.publicPath
@@ -307,12 +325,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
      */
     const prepareOpenBrowserDevServerExtension = () => {
       return {
-        onStart: function (context) {
-          const shouldOpen = typeof args.open === 'undefined' || args.open === true;
+        onStart: (context : { port : number }) => {
+          const shouldOpen = args.open === undefined || args.open === true;
           if (shouldOpen) {
             const serverUrl = `http://localhost:${context.port}`;
             open(serverUrl, {app: ['google chrome']})
-              .catch(err => {
+              .catch(() => {
                 // ignore
               });
           }
@@ -323,14 +341,18 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
     /**
      * Prepare appServerExtensions
      */
-    const prepareAppServerExtensions = (opts = {}) => {
-      const esm = require('esm')(module, {mode: "all", cjs: true});
+    const prepareAppServerExtensions = (opts : {
+      devServerExtension? : boolean;
+      withExtensions? : any | any[];
+    } = {}) => {
+      const esm = require('esm')(module, {mode: 'all', cjs: true});
       let common = [
         path.join(workDir, 'server.mock.js'),
         path.join(workDir, 'server.js')]
-        .filter((script) => fs.existsSync(script))
-        .map((script) => {
-          console.log(chalk.blue('[build-tools]') + ' Applying server extension:\n\t' + chalk.green(script));
+        // tslint:disable-next-line:non-literal-fs-path
+        .filter((script : string) => fs.existsSync(script))
+        .map((script : string) => {
+          console.log(`${chalk.blue('[build-tools]')}Applying server extension:\n\t${chalk.green(script)}`);
           const extension = esm(script);
           return extension.default ? extension.default : extension;
         });
@@ -350,23 +372,21 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
     /**
      * Executes the specified build task.
      */
-    const runTask = (task, exitToUse) => {
+    const runTask = (task : string, exitToUse : ExitHandler) => {
       switch (task) {
         case 'build':
         case 'bundle': {
           const tasks = ['webpack'];
+          // tslint:disable-next-line:non-literal-fs-path
           if (fs.existsSync(path.join(workDir, 'server.js'))) {
             tasks.push('webpack-server');
           }
-          Promise.all(tasks.map(task => {
-            return new Promise((resolve) => {
-              runTask(task, (status) => {
-                resolve(status);
-              });
+          Promise.all(tasks.map((task : string) => {
+            return new Promise((resolve : ExitHandler) => {
+              runTask(task, resolve);
             });
-          })).then((statuses) => {
-            exit(Math.max(...statuses));
-          });
+          }))
+            .then((statuses : number[]) => exit(Math.max(...statuses)));
           break;
         }
         case 'webpack-server': {
@@ -378,7 +398,7 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           break;
         }
         case 'devserver': {
-          appServer(
+          tools.appServer(
             prepareAppServerExtensions({
               withExtensions: prepareOpenBrowserDevServerExtension()
             })
@@ -414,18 +434,21 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
             },
             plugins: ['react'],
             rules: {
-              "react/display-name": 0,
-              "react/prop-types": 0
+              'react/display-name': 0,
+              'react/prop-types': 0
             },
             ignorePattern: 'src/**/*.test.js'
           });
           const report = cli.executeOnFiles(['src/']);
-          report.results.forEach(file => {
+          report.results.forEach((file : any) => {
             if (file.messages.length > 0) {
-              console.log(chalk.magenta('[eslint]') + ' ' + chalk.black(file.filePath));
-              file.messages.forEach(message => {
+              console.log(`${chalk.magenta('[eslint]')} ${chalk.black(file.filePath)}`);
+              file.messages.forEach((message : any) => {
                 const chalkColor = ['green', 'orange', 'red'][message.severity];
-                console.log('  ' + (message.ruleId ? '[' + chalk[chalkColor](message.ruleId) + '] ' : '') + message.message + ' ' + chalk.blue('(line: ' + message.line + ', column: ' + message.column + ')'));
+                // tslint:disable-next-line:prefer-template
+                console.log('  ' + (message.ruleId
+                  ? '[' + chalk[chalkColor](message.ruleId) + '] '
+                  : '') + message.message + ' ' + chalk.blue('(line: ' + message.line + ', column: ' + message.column + ')'));
               });
             }
           });
@@ -433,15 +456,18 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           break;
         }
         case 'run-script': {
+          // tslint:disable-next-line:no-submodule-imports
           require('regenerator-runtime/runtime');
+          // tslint:disable-next-line:non-literal-require
           require(args.script);
           break;
         }
         case 'test': {
-          const jestRunExtension = (port, testURL) => ({
+          const jestRunExtension = (port : number, testURL : string) => ({
             onStart: () => {
               const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
-              let jestConfig = {
+              let jestConfig : JestConfig.InitialOptions = {
+                maxWorkers: 4,
                 verbose: true,
                 rootDir: workDir,
                 testEnvironment: 'jsdom',
@@ -454,32 +480,36 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}'],
                 watchPathIgnorePatterns: ['dist', 'target'],
                 moduleNameMapper: {
-                  "\\.(css|less|sass|scss)$": __dirname + '/__mocks__/style-mock.js'
+                  '\\.(css|less|sass|scss)$': `${__dirname}/__mocks__/style-mock.js`
                 },
                 modulePathIgnorePatterns: ['/node_modules/', '/dist/'],
                 transform: {
-                  "^.+\\.js$": jestTransform,
-                  "^.+\\.tsx?$": 'ts-jest'
+                  '^.+\\.js$': jestTransform,
+                  '^.+\\.tsx?$': 'ts-jest'
                 },
                 transformIgnorePatterns: [
-                  "/node_modules/(?!@github1).+$",
-                  ".*react\-githubish.*",
-                  ".*react\-portal.*"
-                ]
+                  '/node_modules/(?!@github1).+$',
+                  '.*react\-githubish.*',
+                  '.*react\-portal.*'
+                ],
+                setupFiles: []
               };
               jestConfig.setupFiles = [require.resolve('./jest-helpers.js')];
+              // tslint:disable-next-line:non-literal-fs-path
               if (fs.existsSync(path.join(workDir, 'jestSetup.js'))) {
                 jestConfig.setupFiles.push('<rootDir>/jestSetup.js');
               }
               if (port !== undefined) {
-                jestConfig.globals.__JEST_MOCK_SERVER_PORT__ = port;
+                (jestConfig.globals as any).__JEST_MOCK_SERVER_PORT__ = port;
               }
               if (testURL !== undefined) {
                 jestConfig.testURL = testURL;
-                jestConfig.globals.__JEST_MOCK_SERVER__ = testURL;
+                (jestConfig.globals as any).__JEST_MOCK_SERVER__ = testURL;
               }
               const jestConfiguratorFile = path.join(workDir, 'jest.config.js');
+              // tslint:disable-next-line:non-literal-fs-path
               if (fs.existsSync(jestConfiguratorFile)) {
+                // tslint:disable-next-line:non-literal-require
                 const jestConfigurator = require(jestConfiguratorFile);
                 console.log(chalk.blue('[build-tools] ') + chalk.black(`Using ${jestConfiguratorFile}`));
                 if (typeof jestConfigurator === 'function') {
@@ -489,11 +519,15 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 }
               }
               const jestConfigFile = path.join(buildCacheDir, 'jest-config.json');
-              const jestTransformTemplate = fs.readFileSync(path.join(__dirname, 'jest-transform.tpl')).toString();
+              // tslint:disable-next-line:non-literal-fs-path
+              const jestTransformTemplate = fs.readFileSync(path.join(__dirname, 'jest-transform.tpl'))
+                .toString();
               const jestTransformContent = jestTransformTemplate
                 .replace(/\$BABEL_CONFIG/, JSON.stringify(babelOptions))
                 .replace(/\$BABEL_JEST/, require.resolve('babel-jest'));
+              // tslint:disable-next-line:non-literal-fs-path
               fs.writeFileSync(jestTransform, jestTransformContent);
+              // tslint:disable-next-line:non-literal-fs-path
               fs.writeFileSync(jestConfigFile, JSON.stringify(jestConfig));
               const jestCLIArgs = args;
               if (jestCLIArgs.reporters && !Array.isArray(jestCLIArgs.reporters)) {
@@ -505,9 +539,12 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
                 // run specific test file
                 jestCLIArgs._ = [testFileToRun];
               }
-              const jestResult = jest.runCLI(jestCLIArgs, [workDir], jestCLIArgs.runTestsByPath);
+              // const jestResult = tools.jest
+              //   .runCLI(jestCLIArgs, [workDir], jestCLIArgs.runTestsByPath);
+              const jestResult = tools.jest
+                .runCLI(jestCLIArgs, [workDir]);
               if (jestResult && jestResult.then) {
-                jestResult.then(res => {
+                jestResult.then((res : JestAggregatedResult) => {
                   if (res.results && res.results.numFailedTests > 0) {
                     exit(1);
                   } else {
@@ -520,34 +557,38 @@ module.exports = (tools, packageJsonLoader, process, outerExit) => {
           if (process.env.NO_SERVER) {
             jestRunExtension().onStart();
           } else {
-            getPort().then(port => {
-              const testURL = `http://localhost:${port}/`;
-              appServer(
-                prepareAppServerExtensions({
-                  devServerExtension: typeof args.webpackDevServer === 'undefined' || args.webpackDevServer,
-                  withExtensions: jestRunExtension(port, testURL)
-                })
-                , port);
-            });
+            getPort()
+              .then((port : number) => {
+                const testURL = `http://localhost:${port}/`;
+                tools.appServer(
+                  prepareAppServerExtensions({
+                    devServerExtension: typeof args.webpackDevServer === 'undefined' || args.webpackDevServer,
+                    withExtensions: jestRunExtension(port, testURL)
+                  })
+                  , port);
+              });
           }
           break;
         }
+        default:
+          console.log(chalk.red(`Unknown task ${task}`));
+          exitToUse(1);
       }
     };
-
     runTask(args.task, exit);
-
-  }).then(result => {
-    if (result && result.handler) {
-      result.handler();
-    }
-  }).catch(err => {
-    let status = 1;
-    if (typeof err !== 'number') {
-      console.log(err);
-    } else {
-      status = err;
-    }
-    outerExit(status);
-  });
+  })
+    .then((result : TaskResult) => {
+      if (result && result.handler) {
+        result.handler();
+      }
+    })
+    .catch((err : Error) => {
+      let status = 1;
+      if (typeof err !== 'number') {
+        console.log(err);
+      } else {
+        status = err;
+      }
+      outerExit(status);
+    });
 };
