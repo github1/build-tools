@@ -3,7 +3,7 @@
 set -e
 
 function verify() {
-  if [[ "${TEST}" != "false" ]]; then
+  if [[ "${TEST}" != "false" ]] && [[ "${skip_tests}" != "false" ]]; then
     echo "Verifying"
     npm run -s test
     npm run -s lint

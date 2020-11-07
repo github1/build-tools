@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 readlink_f() {
-  echo $(python -c "import os, sys; print os.path.realpath('$1')")
+  echo $(python -c "import os, sys; print(os.path.realpath('$1'))")
 }
 
 SCRIPTPATH=$(readlink_f ${0} | xargs dirname)
