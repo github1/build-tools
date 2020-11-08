@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 
-const entry = require('../src/entry-point');
+const fs = require('fs');
+let entry = require(fs.existsSync(`${__dirname}/../dist`) ? '../dist/src/entry-point' : '../src/entry-point');
+if (entry.default) {
+  entry = entry.default;
+}
 const webpack = require('webpack');
 const appServer = require('@github1/app-server');
-const jest = require('jest-cli');
+const jest = require('jest');
 
 // intercept intellj jest run
 const args = process.argv.slice(2);

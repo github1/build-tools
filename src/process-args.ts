@@ -1,49 +1,39 @@
-/**
- * Parses argv to object
- * @param {NodeJS.Process} process
- * @returns {any}
- */
-module.exports = function (process) {
+// tslint:disable-next-line:no-default-export
+export default function (process : NodeJS.Process) {
   let task;
   let prevFlag;
-  /** @type {(Array<string>)} */
-  let processArgs = process.argv.slice(0);
-  processArgs.shift();
+  const processArgs = process.argv.slice(1);
   const booleanMap = {
-    'true': true,
-    'false': false
+    true: true,
+    false: false
   };
-  while (true) {
-    if (/^-/.test(processArgs[0]) || processArgs.length === 0) {
-      break;
-    } else {
-      task = processArgs.shift();
-    }
+  while (!/^[a-z_\-]+$/ig.test(processArgs[0])) {
+    processArgs.shift();
   }
-  return processArgs.reduce((args, arg) => {
+  task = processArgs.shift();
+  return processArgs.reduce((args : { [key : string] : any }, arg : string) => {
     if (/^-/.test(arg)) {
       prevFlag = toCamel(arg.replace(/^[-]+/, ''));
-      args[prevFlag] = true;
+      if (arg.indexOf('=') > -1) {
+        const name = toCamel(arg.split('=')[0]
+          .replace(/^[-]+/, ''));
+        args[name] = arg.split('=')[1];
+      } else {
+        args[prevFlag] = true;
+      }
     } else if (prevFlag) {
       const argStr = `${arg}`.toLowerCase();
-      if (booleanMap.hasOwnProperty(argStr)) {
-        arg = booleanMap[argStr];
-      }
-      args[prevFlag] = arg;
+      args[prevFlag] = booleanMap.hasOwnProperty(argStr) ? booleanMap[argStr] : arg;
+      prevFlag = undefined;
     }
     return args;
   }, {
     task: task
   });
-};
+}
 
-/**
- * Converts string to camel case
- * @param {string} s
- * @returns {string}
- */
-function toCamel(s) {
-  return s.replace(/([-_][a-z])/ig, ($1) => {
+function toCamel(s : string) {
+  return s.replace(/([-_][a-z])/ig, ($1 : string) => {
     return $1.toUpperCase()
       .replace('-', '')
       .replace('_', '');

@@ -2,14 +2,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import chalk from 'chalk';
-import mkdirp from 'mkdirp';
-import rimraf from 'rimraf';
+import {sync as mkdirpsync} from 'mkdirp';
+import * as rimraf from 'rimraf';
 import * as getPort from 'get-port';
 import open from 'open';
 import nodeExternals from 'webpack-node-externals';
 import * as webpack from 'webpack';
 import * as express from 'express';
-import { runCLI } from 'jest';
+// tslint:disable-next-line:no-implicit-dependencies
+import { runCLI } from '@jest/core';
 // tslint:disable-next-line:no-implicit-dependencies
 import { Config as JestConfig } from '@jest/types';
 // tslint:disable-next-line:no-implicit-dependencies
@@ -28,7 +29,8 @@ export interface TaskResult {
   handler? : ExitHandler;
 }
 
-module.exports = (tools : BuildTools,
+// tslint:disable-next-line:no-default-export
+export default (tools : BuildTools,
                   packageJsonLoader : (pkg : string) => any,
                   process : NodeJS.Process,
                   outerExit : ExitHandler) => {
@@ -43,7 +45,7 @@ module.exports = (tools : BuildTools,
       .toString('base64')
       .substring(0, 8);
     const buildCacheDir = path.join('/tmp/build-tools/', path.basename(workDir), buildKey);
-    mkdirp.sync(buildCacheDir);
+    mkdirpsync(buildCacheDir);
 
     // exit in the context of the promise
     const exit = (status : number) => {
@@ -283,7 +285,7 @@ module.exports = (tools : BuildTools,
     const runWebpack = (prepareWebpackConfig : () => webpack.Configuration, exitHandler? : ExitHandler) => {
       const exitToUse : ExitHandler = exitHandler || exit;
       const webpackConfig = prepareWebpackConfig();
-      webpack(webpackConfig, (err : Error, stats : webpack.Stats) => {
+      tools.webpack(webpackConfig, (err : Error, stats : webpack.Stats) => {
         console.log(stats.toString({
           colors: true
         }));
@@ -311,7 +313,7 @@ module.exports = (tools : BuildTools,
           webpackConfig.output.publicPath = `http://localhost:${context.port}/`;
           ((webpackConfig.entry as webpack.Entry).main as string[]).unshift(`webpack-hot-middleware/client?path=${serverUrl}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`);
           webpackConfig.plugins.unshift(new tools.webpack.HotModuleReplacementPlugin());
-          const compiler = webpack(webpackConfig);
+          const compiler = tools.webpack(webpackConfig);
           app.use(webpackDevMiddleware(compiler, {
             publicPath: webpackConfig.output.publicPath
           }));
@@ -446,13 +448,13 @@ module.exports = (tools : BuildTools,
               file.messages.forEach((message : any) => {
                 const chalkColor = ['green', 'orange', 'red'][message.severity];
                 // tslint:disable-next-line:prefer-template
-                console.log('  ' + (message.ruleId
-                  ? '[' + chalk[chalkColor](message.ruleId) + '] '
-                  : '') + message.message + ' ' + chalk.blue('(line: ' + message.line + ', column: ' + message.column + ')'));
+                console.log(`  ${message.ruleId
+                  ? `[${chalk[chalkColor](message.ruleId)}] `
+                  : ''}${message.message} ${chalk.blue(`(line: ${message.line}, column: ${message.column})`)}`);
               });
             }
           });
-          exitToUse(report.errorCount + report.warningCount > 0 ? 1 : 0);
+          exitToUse(parseInt(report.errorCount, 10) + parseInt(report.warningCount, 10) > 0 ? 1 : 0);
           break;
         }
         case 'run-script': {
@@ -463,7 +465,7 @@ module.exports = (tools : BuildTools,
           break;
         }
         case 'test': {
-          const jestRunExtension = (port : number, testURL : string) => ({
+          const jestRunExtension = (port? : number, testURL? : string) => ({
             onStart: () => {
               const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
               let jestConfig : JestConfig.InitialOptions = {
@@ -529,7 +531,8 @@ module.exports = (tools : BuildTools,
               fs.writeFileSync(jestTransform, jestTransformContent);
               // tslint:disable-next-line:non-literal-fs-path
               fs.writeFileSync(jestConfigFile, JSON.stringify(jestConfig));
-              const jestCLIArgs = args;
+              const jestCLIArgs = {...args};
+              delete jestCLIArgs.task;
               if (jestCLIArgs.reporters && !Array.isArray(jestCLIArgs.reporters)) {
                 jestCLIArgs.reporters = [jestCLIArgs.reporters];
               }
@@ -539,12 +542,10 @@ module.exports = (tools : BuildTools,
                 // run specific test file
                 jestCLIArgs._ = [testFileToRun];
               }
-              // const jestResult = tools.jest
-              //   .runCLI(jestCLIArgs, [workDir], jestCLIArgs.runTestsByPath);
               const jestResult = tools.jest
-                .runCLI(jestCLIArgs, [workDir]);
+                .runCLI(jestCLIArgs as any, [workDir]);
               if (jestResult && jestResult.then) {
-                jestResult.then((res : JestAggregatedResult) => {
+                jestResult.then((res : {results: JestAggregatedResult}) => {
                   if (res.results && res.results.numFailedTests > 0) {
                     exit(1);
                   } else {
@@ -555,14 +556,15 @@ module.exports = (tools : BuildTools,
             }
           });
           if (process.env.NO_SERVER) {
-            jestRunExtension().onStart();
+            jestRunExtension()
+              .onStart();
           } else {
             getPort()
               .then((port : number) => {
                 const testURL = `http://localhost:${port}/`;
                 tools.appServer(
                   prepareAppServerExtensions({
-                    devServerExtension: typeof args.webpackDevServer === 'undefined' || args.webpackDevServer,
+                    devServerExtension: args.webpackDevServer === undefined || args.webpackDevServer,
                     withExtensions: jestRunExtension(port, testURL)
                   })
                   , port);
@@ -571,7 +573,7 @@ module.exports = (tools : BuildTools,
           break;
         }
         default:
-          console.log(chalk.red(`Unknown task ${task}`));
+          console.log(chalk.red(`ERROR: Unknown task ${task}`));
           exitToUse(1);
       }
     };

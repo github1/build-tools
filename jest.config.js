@@ -8,7 +8,8 @@ module.exports = {
   moduleFileExtensions: [
     'ts',
     'js',
-    'node'
+    'node',
+    'json'
   ],
   testRegex: process.env.TEST_REGEX || '.*\\.test\\.ts$',
   coverageDirectory: 'coverage',
@@ -22,5 +23,8 @@ module.exports = {
         warnOnly: true
       }
     }
-  }
+  },
+  modulePathIgnorePatterns: [
+    '<rootDir>/dist'
+  ]
 };
