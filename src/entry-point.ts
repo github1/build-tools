@@ -5,8 +5,7 @@ import chalk from 'chalk';
 import {sync as mkdirpsync} from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as getPort from 'get-port';
-import open from 'open';
-import nodeExternals from 'webpack-node-externals';
+import * as open from 'open';
 import * as webpack from 'webpack';
 import * as express from 'express';
 // tslint:disable-next-line:no-implicit-dependencies
@@ -16,6 +15,8 @@ import { Config as JestConfig } from '@jest/types';
 // tslint:disable-next-line:no-implicit-dependencies
 import { AggregatedResult as JestAggregatedResult } from '@jest/test-result';
 import processArgs from './process-args';
+// tslint:disable-next-line:no-var-requires
+const nodeExternals = require('webpack-node-externals');
 
 export interface BuildTools {
   webpack : typeof webpack;
