@@ -179,7 +179,7 @@ export default (tools : BuildTools,
               options: {engine: 'rework'}
             }, {
               loader: require.resolve('sass-loader'),
-              options: {sourceMap: true}
+              options: {sourceMap: process.env.SASS_SOURCE_MAP !== 'false'}
             }]
           },
             {
