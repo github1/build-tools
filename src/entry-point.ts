@@ -9,18 +9,18 @@ import * as open from 'open';
 import * as webpack from 'webpack';
 import * as express from 'express';
 // tslint:disable-next-line:no-implicit-dependencies
-import { runCLI } from '@jest/core';
+import {runCLI} from '@jest/core';
 // tslint:disable-next-line:no-implicit-dependencies
-import { Config as JestConfig } from '@jest/types';
+import {Config as JestConfig} from '@jest/types';
 // tslint:disable-next-line:no-implicit-dependencies
-import { AggregatedResult as JestAggregatedResult } from '@jest/test-result';
+import {AggregatedResult as JestAggregatedResult} from '@jest/test-result';
 import processArgs from './process-args';
 // tslint:disable-next-line:no-var-requires
 const nodeExternals = require('webpack-node-externals');
 
 export interface BuildTools {
   webpack : typeof webpack;
-  jest : { runCLI: typeof runCLI };
+  jest : { runCLI : typeof runCLI };
   appServer : any;
 }
 
@@ -32,9 +32,9 @@ export interface TaskResult {
 
 // tslint:disable-next-line:no-default-export
 export default (tools : BuildTools,
-                  packageJsonLoader : (pkg : string) => any,
-                  process : NodeJS.Process,
-                  outerExit : ExitHandler) => {
+                packageJsonLoader : (pkg : string) => any,
+                process : NodeJS.Process,
+                outerExit : ExitHandler) => {
   return new Promise((resolve : (value? : TaskResult) => void) => {
 
     const workDir = process.cwd();
@@ -158,7 +158,8 @@ export default (tools : BuildTools,
             }, {
               loader: require.resolve('postcss-loader'),
               options: {
-                plugins: postCssPlugins
+                plugins: postCssPlugins,
+                sourceMap: process.env.SASS_SOURCE_MAP !== 'false'
               }
             }, {
               loader: require.resolve('less-loader')
@@ -172,7 +173,8 @@ export default (tools : BuildTools,
             }, {
               loader: require.resolve('postcss-loader'),
               options: {
-                plugins: postCssPlugins
+                plugins: postCssPlugins,
+                sourceMap: process.env.SASS_SOURCE_MAP !== 'false'
               }
             }, {
               loader: require.resolve('resolve-url-loader'),
@@ -546,7 +548,7 @@ export default (tools : BuildTools,
               const jestResult = tools.jest
                 .runCLI(jestCLIArgs as any, [workDir]);
               if (jestResult && jestResult.then) {
-                jestResult.then((res : {results: JestAggregatedResult}) => {
+                jestResult.then((res : { results : JestAggregatedResult }) => {
                   if (res.results && res.results.numFailedTests > 0) {
                     exit(1);
                   } else {
