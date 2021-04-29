@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const path = require('path');
 
 function logFiles(dir) {
   try {
@@ -16,11 +17,13 @@ function logFiles(dir) {
   }
 }
 
-logFiles('.');
-logFiles(__dirname);
-logFiles(__dirname + "/../");
+// logFiles('.');
+// logFiles(__dirname);
+// logFiles(__dirname + "/../");
+logFiles(__dirname + "/../src");
+logFiles(path.resolve(__dirname + "/../src"));
 
-let entry = require(fs.existsSync(`${__dirname}/../dist`) ? `${__dirname}/../dist/src/entry-point` : `${__dirname}/../src/entry-point`);
+let entry = require(path.resolve(fs.existsSync(`${__dirname}/../dist`) ? `${__dirname}/../dist/src/entry-point` : `${__dirname}/../src/entry-point`));
 if (entry.default) {
   entry = entry.default;
 }
