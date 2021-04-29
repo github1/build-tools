@@ -1,29 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const path = require('path');
-
-function logFiles(dir) {
-  try {
-    console.log('files in', dir);
-    const files = fs.readdirSync(dir);
-    // files object contains all files names
-    // log them on console
-    files.forEach(file => {
-      console.log(file);
-    });
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-// logFiles('.');
-// logFiles(__dirname);
-// logFiles(__dirname + "/../");
-logFiles(__dirname + "/../src");
-logFiles(path.resolve(__dirname + "/../src"));
-
-let entry = require(path.resolve(fs.existsSync(`${__dirname}/../dist`) ? `${__dirname}/../dist/src/entry-point` : `${__dirname}/../src/entry-point`));
+let entry = require(fs.existsSync(`${__dirname}/../dist`) ? '../dist/src/entry-point' : '../src/entry-point');
 if (entry.default) {
   entry = entry.default;
 }
