@@ -20,7 +20,7 @@ logFiles('.');
 logFiles(__dirname);
 logFiles(__dirname + "/../");
 
-let entry = require(fs.existsSync(`${__dirname}/../dist`) ? '../dist/src/entry-point' : '../src/entry-point');
+let entry = require(fs.existsSync(`${__dirname}/../dist`) ? `${__dirname}/../dist/src/entry-point` : `${__dirname}/../src/entry-point`);
 if (entry.default) {
   entry = entry.default;
 }
