@@ -499,7 +499,7 @@ export default (tools : BuildTools,
                 ],
                 setupFiles: []
               };
-              jestConfig.setupFiles = [path.resolve(__dirname, 'jest-helpers.js')];
+              jestConfig.setupFiles = [require.resolve('./jest-helpers.js')];
               // tslint:disable-next-line:non-literal-fs-path
               if (fs.existsSync(path.join(workDir, 'jestSetup.js'))) {
                 jestConfig.setupFiles.push('<rootDir>/jestSetup.js');
