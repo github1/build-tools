@@ -1,7 +1,7 @@
 {
   "name": "@github1/build-tools",
   "private": false,
-  "version": "0.4.0",
+  "version": "0.4.4",
   "description": "Wrapper for webpack, jest and other dev tools",
   "main": "index.js",
   "types": "index.d.ts",
@@ -22,7 +22,7 @@
   "author": "John Collier <john.collier4@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@github1/app-server": "0.4.0",
+    "@github1/app-server": "0.4.4",
     "@types/jest": "26.0.9",
     "@types/node": "12.12.6",
     "autoprefixer": "8.3.0",
@@ -50,6 +50,7 @@
     "ignore-styles": "5.0.1",
     "jest": "26.2.2",
     "jest-cli": "26.2.2",
+    "jsonpath": "1.0.2",
     "json-stringify-safe": "5.0.1",
     "less": "3.0.1",
     "less-loader": "4.1.0",

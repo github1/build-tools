@@ -1,6 +1,7 @@
+/* tslint:disable:function-name */
 export interface DeferredPromiseConfig {
-  onResolve? : (result : any) => any;
-  onReject? : (error : Error) => any;
+  onReject?(error : Error): any;
+  onResolve?(result : any): any;
 }
 
 export declare interface IDeferredPromise {
@@ -19,8 +20,10 @@ export declare class DeferredPromise extends Promise<any> implements IDeferredPr
   public forceReject(value : any) : void;
 }
 
-export declare function findJson(json : any, func : (json : any) => boolean, matches? : Array<any>) : any;
+export type JsonMatcher = (json : any) => boolean;
+
+export declare function findJson(json : any, jsonPathOrMatcherFunc : string | JsonMatcher, matches? : any[]) : any;
 
 export declare function withAttribute(key : string, value : any) : (json : any) => boolean;
 
-export declare function log(...things : Array<any>);
+export declare function log(...things : any[]);

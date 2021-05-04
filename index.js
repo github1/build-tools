@@ -1,26 +1,29 @@
 const fs = require('fs');
 const stringify = require('json-stringify-safe');
 const renderToJson = require('react-render-to-json').default;
+const jsonpath = require('jsonpath');
 
-const findJson = (json, func, matches) => {
+const findJson = (json, jsonPathOrMatcherFunc, matches) => {
   matches = matches || [];
-  if (Array.isArray(json)) {
-    json.forEach(item => {
-      findJson(typeof item === 'function' ?
-        renderToJson(item) : {attributes: item.props}, func, matches)
-    });
+  if (typeof jsonPathOrMatcherFunc === 'string') {
+    return jsonpath.query(json, jsonPathOrMatcherFunc);
   } else {
-    if (func({
-      attributes: {},
-      ...json
-    })) {
-      matches.push(json);
-    }
-    (json.children || [])
-      .filter(child => child !== null)
-      .forEach(child => {
-        findJson(child, func, matches);
+    if (Array.isArray(json)) {
+      json.forEach(item => {
+        findJson(typeof item === 'function' ?
+          renderToJson(item) : {attributes: item.props}, jsonPathOrMatcherFunc, matches)
       });
+    } else {
+      if (jsonPathOrMatcherFunc({
+        attributes: {},
+        ...json
+      })) {
+        matches.push(json);
+      }
+      (json.children || [])
+        .filter(child => child !== null)
+        .forEach(child => findJson(child, jsonPathOrMatcherFunc, matches));
+    }
   }
   return matches;
 };
