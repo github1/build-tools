@@ -244,7 +244,7 @@ export default (tools : BuildTools,
         context: workDir,
         target: 'node',
         entry: {
-          server: './server.js'
+          server: './server'
         },
         mode: (process.env.NODE_ENV || 'development') as any,
         optimization: {
@@ -258,6 +258,18 @@ export default (tools : BuildTools,
               loader: require.resolve('babel-loader'),
               options: babelOptions
             }
+          }, {
+            test: /\.ts(x?)$/,
+            exclude: /(node_modules)/,
+            use: [{
+              loader: require.resolve('babel-loader'),
+              options: babelOptions
+            }, {
+              loader: 'ts-loader',
+              options: {
+                configFile: 'tsconfig.server.json'
+              }
+            }]
           }, {
             test: /\.(less|scss)$/,
             use: {
@@ -274,7 +286,7 @@ export default (tools : BuildTools,
       };
       // tslint:disable-next-line:non-literal-fs-path
       config.entry = fs.readdirSync(workDir)
-        .filter((file : string) => /^server\..*js$/.test(file))
+        .filter((file : string) => /^server\..*(js|tsx?)$/.test(file))
         .reduce((entry : any, file : string) => {
           entry[file.replace(/\.[^.]+$/, '')] = `./${file}`;
           return entry;
@@ -353,7 +365,8 @@ export default (tools : BuildTools,
       const esm = require('esm')(module, {mode: 'all', cjs: true});
       let common = [
         path.join(workDir, 'server.mock.js'),
-        path.join(workDir, 'server.js')]
+        path.join(workDir, 'server.js'),
+        path.join(workDir, './target/dist/public/server.js')]
         // tslint:disable-next-line:non-literal-fs-path
         .filter((script : string) => fs.existsSync(script))
         .map((script : string) => {
@@ -403,11 +416,13 @@ export default (tools : BuildTools,
           break;
         }
         case 'devserver': {
-          tools.appServer(
-            prepareAppServerExtensions({
-              withExtensions: prepareOpenBrowserDevServerExtension()
-            })
-          );
+          runWebpack(prepareWebpackConfigServer, () => {
+            tools.appServer(
+              prepareAppServerExtensions({
+                withExtensions: prepareOpenBrowserDevServerExtension()
+              })
+            );
+          });
           keepRunning();
           break;
         }
