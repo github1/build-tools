@@ -256,6 +256,9 @@ export default (tools : BuildTools,
         entry: {
           server: './server'
         },
+        resolve: {
+          extensions: ['.ts', '.tsx', '.js']
+        },
         mode: (process.env.NODE_ENV || 'development') as any,
         optimization: {
           minimize: false
