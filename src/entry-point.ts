@@ -30,7 +30,7 @@ export interface TaskResult {
   handler? : ExitHandler;
 }
 
-let foundServerFiles;
+let foundServerFiles: string[];
 function findServerFiles(workDir : string): string[] {
   if (!foundServerFiles) {
     // tslint:disable-next-line:non-literal-fs-path
