@@ -30,6 +30,16 @@ export interface TaskResult {
   handler? : ExitHandler;
 }
 
+let foundServerFiles;
+function findServerFiles(workDir : string): string[] {
+  if (!foundServerFiles) {
+    // tslint:disable-next-line:non-literal-fs-path
+    foundServerFiles = fs.readdirSync(workDir)
+      .filter((file : string) => /^server\..*(js|tsx?)$/.test(file));
+  }
+  return foundServerFiles;
+}
+
 // tslint:disable-next-line:no-default-export
 export default (tools : BuildTools,
                 packageJsonLoader : (pkg : string) => any,
@@ -284,9 +294,7 @@ export default (tools : BuildTools,
           filename: '[name].js'
         }
       };
-      // tslint:disable-next-line:non-literal-fs-path
-      config.entry = fs.readdirSync(workDir)
-        .filter((file : string) => /^server\..*(js|tsx?)$/.test(file))
+      config.entry = findServerFiles(workDir)
         .reduce((entry : any, file : string) => {
           entry[file.replace(/\.[^.]+$/, '')] = `./${file}`;
           return entry;
@@ -396,7 +404,7 @@ export default (tools : BuildTools,
         case 'bundle': {
           const tasks = ['webpack'];
           // tslint:disable-next-line:non-literal-fs-path
-          if (fs.existsSync(path.join(workDir, 'server.js'))) {
+          if (findServerFiles(workDir).length > 0) {
             tasks.push('webpack-server');
           }
           Promise.all(tasks.map((task : string) => {
@@ -416,13 +424,18 @@ export default (tools : BuildTools,
           break;
         }
         case 'devserver': {
-          runWebpack(prepareWebpackConfigServer, () => {
+          const runDevServer = () => {
             tools.appServer(
               prepareAppServerExtensions({
                 withExtensions: prepareOpenBrowserDevServerExtension()
               })
             );
-          });
+          };
+          if (findServerFiles(workDir).length > 0) {
+            runWebpack(prepareWebpackConfigServer, runDevServer);
+          } else {
+            runDevServer();
+          }
           keepRunning();
           break;
         }
