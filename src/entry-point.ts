@@ -2,74 +2,79 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import chalk from 'chalk';
-import {sync as mkdirpsync} from 'mkdirp';
+import { sync as mkdirpsync } from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as getPort from 'get-port';
 import * as open from 'open';
 import * as webpack from 'webpack';
 import * as express from 'express';
 // tslint:disable-next-line:no-implicit-dependencies
-import {runCLI} from '@jest/core';
+import { runCLI } from '@jest/core';
 // tslint:disable-next-line:no-implicit-dependencies
-import {Config as JestConfig} from '@jest/types';
+import { Config as JestConfig } from '@jest/types';
 // tslint:disable-next-line:no-implicit-dependencies
-import {AggregatedResult as JestAggregatedResult} from '@jest/test-result';
+import { AggregatedResult as JestAggregatedResult } from '@jest/test-result';
 import processArgs from './process-args';
 // tslint:disable-next-line:no-var-requires
 const nodeExternals = require('webpack-node-externals');
 
 export interface BuildTools {
-  webpack : typeof webpack;
-  jest : { runCLI : typeof runCLI };
-  appServer : any;
+  webpack: typeof webpack;
+  jest: { runCLI: typeof runCLI };
+  appServer: any;
 }
 
-export type ExitHandler = (status? : number) => void;
+export type ExitHandler = (status?: number) => void;
 
 export interface TaskResult {
-  handler? : ExitHandler;
+  handler?: ExitHandler;
 }
 
 let foundServerFiles: string[];
-function findServerFiles(workDir : string): string[] {
+function findServerFiles(workDir: string): string[] {
   if (!foundServerFiles) {
     // tslint:disable-next-line:non-literal-fs-path
-    foundServerFiles = fs.readdirSync(workDir)
-      .filter((file : string) => /^server\..*(js|tsx?)$/.test(file));
+    foundServerFiles = fs
+      .readdirSync(workDir)
+      .filter((file: string) => /^server\..*(js|tsx?)$/.test(file));
   }
   return foundServerFiles;
 }
 
 // tslint:disable-next-line:no-default-export
-export default (tools : BuildTools,
-                packageJsonLoader : (pkg : string) => any,
-                process : NodeJS.Process,
-                outerExit : ExitHandler) => {
-  return new Promise((resolve : (value? : TaskResult) => void) => {
-
+export default (
+  tools: BuildTools,
+  packageJsonLoader: (pkg: string) => any,
+  process: NodeJS.Process,
+  outerExit: ExitHandler
+) => {
+  return new Promise((resolve: (value?: TaskResult) => void) => {
     const workDir = process.cwd();
     const args = processArgs(process);
-    const buildKey = Buffer.from(crypto
-      .createHash('md5')
-      .update(workDir)
-      .digest('hex'))
+    const buildKey = Buffer.from(
+      crypto.createHash('md5').update(workDir).digest('hex')
+    )
       .toString('base64')
       .substring(0, 8);
-    const buildCacheDir = path.join('/tmp/build-tools/', path.basename(workDir), buildKey);
+    const buildCacheDir = path.join(
+      '/tmp/build-tools/',
+      path.basename(workDir),
+      buildKey
+    );
     mkdirpsync(buildCacheDir);
 
     // exit in the context of the promise
-    const exit = (status : number) => {
+    const exit = (status: number) => {
       rimraf(buildCacheDir, () => '');
       resolve({
-        handler: () => outerExit(status)
+        handler: () => outerExit(status),
       });
     };
 
     // do not terminate the process
     const keepRunning = resolve;
 
-    const resolveBabelModules = (entry : any | string[]) => {
+    const resolveBabelModules = (entry: any | string[]) => {
       if (Array.isArray(entry)) {
         entry[0] = require.resolve(entry[0]);
         return entry;
@@ -81,146 +86,177 @@ export default (tools : BuildTools,
       presets: [
         'babel-preset-env',
         'babel-preset-stage-3',
-        'babel-preset-react'
+        'babel-preset-react',
       ].map(resolveBabelModules),
       plugins: [
         'babel-plugin-closure-elimination',
         'babel-plugin-transform-remove-strict-mode',
-        ['babel-plugin-inline-import', {
-          extensions: [
-            '.inline.test.js'
-          ]
-        }]
-      ].map(resolveBabelModules)
+        [
+          'babel-plugin-inline-import',
+          {
+            extensions: ['.inline.test.js'],
+          },
+        ],
+      ].map(resolveBabelModules),
     };
 
-    require('ignore-styles')
-      .default(['.less', '.scss', '.css']);
+    require('ignore-styles').default(['.less', '.scss', '.css']);
     // tslint:disable-next-line:no-submodule-imports
     require('babel-core/register')(babelOptions);
 
     /**
      * Prepares the webpack config.
      */
-    const prepareWebpackConfig = () : webpack.Configuration => {
+    const prepareWebpackConfig = (): webpack.Configuration => {
       // const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
       // tslint:disable-next-line:variable-name
       const MiniCssExtractPlugin = require('mini-css-extract-plugin');
       const extractCss = new MiniCssExtractPlugin({
         filename: 'assets/[name].css',
-        chunkFilename: '[id].css'
+        chunkFilename: '[id].css',
       });
       const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
       const postCssPlugins = [require('autoprefixer')];
       if (process.env.NODE_ENV === 'production') {
-        postCssPlugins.push(require('cssnano')({
-          preset: 'default'
-        }));
+        postCssPlugins.push(
+          require('cssnano')({
+            preset: 'default',
+          })
+        );
       }
-      const styleLoader = process.env.INLINE_STYLE ? require.resolve('style-loader') : MiniCssExtractPlugin.loader;
-      const webpackConfig : webpack.Configuration = {
+      const styleLoader = process.env.INLINE_STYLE
+        ? require.resolve('style-loader')
+        : MiniCssExtractPlugin.loader;
+      const webpackConfig: webpack.Configuration = {
         context: workDir,
         entry: {
-          main: [
-            require.resolve('idempotent-babel-polyfill'),
-            './src/index']
+          main: [require.resolve('idempotent-babel-polyfill'), './src/index'],
         },
         resolve: {
-          extensions: ['.ts', '.tsx', '.js']
+          extensions: ['.ts', '.tsx', '.js'],
         },
         mode: (process.env.NODE_ENV || 'development') as any,
         optimization: {
-          minimize: process.env.NODE_ENV === 'production'
+          minimize: process.env.NODE_ENV === 'production',
         },
         plugins: [
           //new BundleAnalyzerPlugin(),
-          extractCss
+          extractCss,
         ],
         module: {
-          rules: [{
-            test: /\.inline.*([jt])sx?$/,
-            exclude: /(node_modules)/,
-            use: {
-              loader: require.resolve('raw-loader')
-            }
-          }, {
-            test: /\.js$/,
-            exclude: /(node_modules)/,
-            use: {
-              loader: require.resolve('babel-loader'),
-              options: babelOptions
-            }
-          }, {
-            test: /\.ts(x?)$/,
-            exclude: /(node_modules)/,
-            use: [{
-              loader: require.resolve('babel-loader'),
-              options: babelOptions
-            }, {
-              loader: 'ts-loader'
-            }]
-          }, {
-            test: /\.less$/,
-            use: [{
-              loader: styleLoader
-            }, {
-              loader: require.resolve('css-loader')
-            }, {
-              loader: require.resolve('postcss-loader'),
-              options: {
-                plugins: postCssPlugins,
-                sourceMap: process.env.SASS_SOURCE_MAP !== 'false'
-              }
-            }, {
-              loader: require.resolve('less-loader')
-            }]
-          }, {
-            test: /\.(scss|sass)$/,
-            use: [{
-              loader: styleLoader
-            }, {
-              loader: require.resolve('css-loader')
-            }, {
-              loader: require.resolve('postcss-loader'),
-              options: {
-                plugins: postCssPlugins,
-                sourceMap: process.env.SASS_SOURCE_MAP !== 'false'
-              }
-            }, {
-              loader: require.resolve('resolve-url-loader'),
-              options: {engine: 'rework'}
-            }, {
-              loader: require.resolve('sass-loader'),
-              options: {sourceMap: process.env.SASS_SOURCE_MAP !== 'false'}
-            }]
-          },
+          rules: [
+            {
+              test: /\.inline.*([jt])sx?$/,
+              exclude: /(node_modules)/,
+              use: {
+                loader: require.resolve('raw-loader'),
+              },
+            },
+            {
+              test: /\.js$/,
+              exclude: /(node_modules)/,
+              use: {
+                loader: require.resolve('babel-loader'),
+                options: babelOptions,
+              },
+            },
+            {
+              test: /\.ts(x?)$/,
+              exclude: /(node_modules)/,
+              use: [
+                {
+                  loader: require.resolve('babel-loader'),
+                  options: babelOptions,
+                },
+                {
+                  loader: 'ts-loader',
+                },
+              ],
+            },
+            {
+              test: /\.less$/,
+              use: [
+                {
+                  loader: styleLoader,
+                },
+                {
+                  loader: require.resolve('css-loader'),
+                },
+                {
+                  loader: require.resolve('postcss-loader'),
+                  options: {
+                    plugins: postCssPlugins,
+                    sourceMap: process.env.SASS_SOURCE_MAP !== 'false',
+                  },
+                },
+                {
+                  loader: require.resolve('less-loader'),
+                },
+              ],
+            },
+            {
+              test: /\.(scss|sass)$/,
+              use: [
+                {
+                  loader: styleLoader,
+                },
+                {
+                  loader: require.resolve('css-loader'),
+                },
+                {
+                  loader: require.resolve('postcss-loader'),
+                  options: {
+                    plugins: postCssPlugins,
+                    sourceMap: process.env.SASS_SOURCE_MAP !== 'false',
+                  },
+                },
+                {
+                  loader: require.resolve('resolve-url-loader'),
+                  options: { engine: 'rework' },
+                },
+                {
+                  loader: require.resolve('sass-loader'),
+                  options: {
+                    sourceMap: process.env.SASS_SOURCE_MAP !== 'false',
+                  },
+                },
+              ],
+            },
             {
               test: /\.(png|woff|woff2|eot|ttf|svg)$/,
               loader: require.resolve('url-loader'),
               options: {
-                limit: 10000
-              }
-            }]
+                limit: 10000,
+              },
+            },
+          ],
         },
         output: {
           library: packageJson.name,
           libraryTarget: 'umd',
           path: path.join(workDir, './target/dist/public'),
-          filename: 'assets/[name].bundle.js'
+          filename: 'assets/[name].bundle.js',
         },
         externals: [
-          (context : any, request : any, callback : webpack.ExternalsFunctionCallback) => {
+          (
+            context: any,
+            request: any,
+            callback: webpack.ExternalsFunctionCallback
+          ) => {
             if (/^@api\//.test(request)) {
               return callback(undefined, request);
             }
             callback();
-          }
+          },
         ],
-        devtool: (process.env.NODE_ENV === 'production' ? false : 'source-map') as webpack.Options.Devtool
+        devtool: (process.env.NODE_ENV === 'production'
+          ? false
+          : 'source-map') as webpack.Options.Devtool,
       };
       if (args.entry) {
-        webpackConfig.entry = args.entry.split(',')
-          .reduce((entries : any, entry : string) => {
+        webpackConfig.entry = args.entry
+          .split(',')
+          .reduce((entries: any, entry: string) => {
             const name = entry.split(':')[0];
             const path = entry.split(':')[1];
             if (name.trim().length > 0) {
@@ -236,7 +272,7 @@ export default (tools : BuildTools,
       }
       if (args.outputDir) {
         webpackConfig.output = {
-          path: path.join(workDir, args.outputDir)
+          path: path.join(workDir, args.outputDir),
         };
       }
       if (args.outputFilename) {
@@ -248,73 +284,87 @@ export default (tools : BuildTools,
     /**
      * Prepares the webpack config for server code.
      */
-    const prepareWebpackConfigServer = () : webpack.Configuration => {
+    const prepareWebpackConfigServer = (): webpack.Configuration => {
       const packageJson = packageJsonLoader(path.join(workDir, 'package.json'));
-      const config : webpack.Configuration = {
+      const config: webpack.Configuration = {
         context: workDir,
         target: 'node',
         entry: {
-          server: './server'
+          server: './server',
         },
         resolve: {
-          extensions: ['.ts', '.tsx', '.js']
+          extensions: ['.ts', '.tsx', '.js'],
         },
         mode: (process.env.NODE_ENV || 'development') as any,
         optimization: {
-          minimize: false
+          minimize: false,
         },
         module: {
-          rules: [{
-            test: /\.jsx?$/,
-            exclude: /(node_modules)/,
-            use: {
-              loader: require.resolve('babel-loader'),
-              options: babelOptions
-            }
-          }, {
-            test: /\.ts(x?)$/,
-            exclude: /(node_modules)/,
-            use: [{
-              loader: require.resolve('babel-loader'),
-              options: babelOptions
-            }, {
-              loader: 'ts-loader',
-              options: {
-                configFile: 'tsconfig.server.json'
-              }
-            }]
-          }, {
-            test: /\.(less|scss)$/,
-            use: {
-              loader: require.resolve('null-loader')
-            }
-          }]
+          rules: [
+            {
+              test: /\.jsx?$/,
+              exclude: /(node_modules)/,
+              use: {
+                loader: require.resolve('babel-loader'),
+                options: babelOptions,
+              },
+            },
+            {
+              test: /\.ts(x?)$/,
+              exclude: /(node_modules)/,
+              use: [
+                {
+                  loader: require.resolve('babel-loader'),
+                  options: babelOptions,
+                },
+                {
+                  loader: 'ts-loader',
+                  options: {
+                    configFile: 'tsconfig.server.json',
+                  },
+                },
+              ],
+            },
+            {
+              test: /\.(less|scss)$/,
+              use: {
+                loader: require.resolve('null-loader'),
+              },
+            },
+          ],
         },
         output: {
           library: packageJson.name,
           libraryTarget: 'umd',
           path: path.join(workDir, './target/dist/public'),
-          filename: '[name].js'
-        }
+          filename: '[name].js',
+        },
       };
-      config.entry = findServerFiles(workDir)
-        .reduce((entry : any, file : string) => {
+      config.entry = findServerFiles(workDir).reduce(
+        (entry: any, file: string) => {
           entry[file.replace(/\.[^.]+$/, '')] = `./${file}`;
           return entry;
-        }, {});
+        },
+        {}
+      );
       return config;
     };
 
     /**
      * Runs webpack build.
      */
-    const runWebpack = (prepareWebpackConfig : () => webpack.Configuration, exitHandler? : ExitHandler) => {
-      const exitToUse : ExitHandler = exitHandler || exit;
+    const runWebpack = (
+      prepareWebpackConfig: () => webpack.Configuration,
+      exitHandler?: ExitHandler
+    ) => {
+      const exitToUse: ExitHandler = exitHandler || exit;
       const webpackConfig = prepareWebpackConfig();
-      tools.webpack(webpackConfig, (err : Error, stats : webpack.Stats) => {
-        console.log(stats.toString({
-          colors: true
-        }));
+      tools.webpack(webpackConfig, (err: Error, stats: webpack.Stats) => {
+        console.log(
+          stats.toString({
+            colors: true,
+          })
+        );
         if (err || stats.hasErrors()) {
           exitToUse(1);
         } else {
@@ -328,7 +378,7 @@ export default (tools : BuildTools,
      */
     const prepareWebpackDevServerExtension = () => {
       return {
-        onSetup: (app : express.Application, context : { port : number }) => {
+        onSetup: (app: express.Application, context: { port: number }) => {
           if (process.env.NO_WEBPACK) {
             return;
           }
@@ -337,14 +387,20 @@ export default (tools : BuildTools,
           const webpackHotMiddleware = require('webpack-hot-middleware');
           const webpackConfig = prepareWebpackConfig();
           webpackConfig.output.publicPath = `http://localhost:${context.port}/`;
-          ((webpackConfig.entry as webpack.Entry).main as string[]).unshift(`webpack-hot-middleware/client?path=${serverUrl}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`);
-          webpackConfig.plugins.unshift(new tools.webpack.HotModuleReplacementPlugin());
+          ((webpackConfig.entry as webpack.Entry).main as string[]).unshift(
+            `webpack-hot-middleware/client?path=${serverUrl}/__webpack_hmr&reload=true&timeout=20000&__webpack_public_path=http://webpack:${context.port}`
+          );
+          webpackConfig.plugins.unshift(
+            new tools.webpack.HotModuleReplacementPlugin()
+          );
           const compiler = tools.webpack(webpackConfig);
-          app.use(webpackDevMiddleware(compiler, {
-            publicPath: webpackConfig.output.publicPath
-          }));
+          app.use(
+            webpackDevMiddleware(compiler, {
+              publicPath: webpackConfig.output.publicPath,
+            })
+          );
           app.use(webpackHotMiddleware(compiler));
-        }
+        },
       };
     };
 
@@ -353,35 +409,41 @@ export default (tools : BuildTools,
      */
     const prepareOpenBrowserDevServerExtension = () => {
       return {
-        onStart: (context : { port : number }) => {
+        onStart: (context: { port: number }) => {
           const shouldOpen = args.open === undefined || args.open === true;
           if (shouldOpen) {
             const serverUrl = `http://localhost:${context.port}`;
-            open(serverUrl, {app: ['google chrome']})
-              .catch(() => {
-                // ignore
-              });
+            open(serverUrl, { app: ['google chrome'] }).catch(() => {
+              // ignore
+            });
           }
-        }
+        },
       };
     };
 
     /**
      * Prepare appServerExtensions
      */
-    const prepareAppServerExtensions = (opts : {
-      devServerExtension? : boolean;
-      withExtensions? : any | any[];
-    } = {}) => {
-      const esm = require('esm')(module, {mode: 'all', cjs: true});
+    const prepareAppServerExtensions = (
+      opts: {
+        devServerExtension?: boolean;
+        withExtensions?: any | any[];
+      } = {}
+    ) => {
+      const esm = require('esm')(module, { mode: 'all', cjs: true });
       let common = [
         path.join(workDir, 'server.mock.js'),
         path.join(workDir, 'server.js'),
-        path.join(workDir, './target/dist/public/server.js')]
+        path.join(workDir, './target/dist/public/server.js'),
+      ]
         // tslint:disable-next-line:non-literal-fs-path
-        .filter((script : string) => fs.existsSync(script))
-        .map((script : string) => {
-          console.log(`${chalk.blue('[build-tools]')}Applying server extension:\n\t${chalk.green(script)}`);
+        .filter((script: string) => fs.existsSync(script))
+        .map((script: string) => {
+          console.log(
+            `${chalk.blue(
+              '[build-tools]'
+            )}Applying server extension:\n\t${chalk.green(script)}`
+          );
           const extension = esm(script);
           return extension.default ? extension.default : extension;
         });
@@ -401,7 +463,7 @@ export default (tools : BuildTools,
     /**
      * Executes the specified build task.
      */
-    const runTask = (task : string, exitToUse : ExitHandler) => {
+    const runTask = (task: string, exitToUse: ExitHandler) => {
       switch (task) {
         case 'build':
         case 'bundle': {
@@ -410,12 +472,13 @@ export default (tools : BuildTools,
           if (findServerFiles(workDir).length > 0) {
             tasks.push('webpack-server');
           }
-          Promise.all(tasks.map((task : string) => {
-            return new Promise((resolve : ExitHandler) => {
-              runTask(task, resolve);
-            });
-          }))
-            .then((statuses : number[]) => exit(Math.max(...statuses)));
+          Promise.all(
+            tasks.map((task: string) => {
+              return new Promise((resolve: ExitHandler) => {
+                runTask(task, resolve);
+              });
+            })
+          ).then((statuses: number[]) => exit(Math.max(...statuses)));
           break;
         }
         case 'webpack-server': {
@@ -430,7 +493,7 @@ export default (tools : BuildTools,
           const runDevServer = () => {
             tools.appServer(
               prepareAppServerExtensions({
-                withExtensions: prepareOpenBrowserDevServerExtension()
+                withExtensions: prepareOpenBrowserDevServerExtension(),
               })
             );
           };
@@ -446,15 +509,12 @@ export default (tools : BuildTools,
           const CLIEngine = require('eslint').CLIEngine;
           const cli = new CLIEngine({
             baseConfig: {
-              extends: [
-                'eslint:recommended',
-                'plugin:react/recommended'
-              ],
+              extends: ['eslint:recommended', 'plugin:react/recommended'],
               settings: {
                 react: {
-                  version: '16.0'
-                }
-              }
+                  version: '16.0',
+                },
+              },
             },
             envs: ['node', 'browser', 'es6'],
             fix: true,
@@ -465,30 +525,44 @@ export default (tools : BuildTools,
               sourceType: 'module',
               ecmaFeatures: {
                 jsx: true,
-                arrowFunctions: true
-              }
+                arrowFunctions: true,
+              },
             },
             plugins: ['react'],
             rules: {
               'react/display-name': 0,
-              'react/prop-types': 0
+              'react/prop-types': 0,
             },
-            ignorePattern: 'src/**/*.test.js'
+            ignorePattern: 'src/**/*.test.js',
           });
           const report = cli.executeOnFiles(['src/']);
-          report.results.forEach((file : any) => {
+          report.results.forEach((file: any) => {
             if (file.messages.length > 0) {
-              console.log(`${chalk.magenta('[eslint]')} ${chalk.black(file.filePath)}`);
-              file.messages.forEach((message : any) => {
+              console.log(
+                `${chalk.magenta('[eslint]')} ${chalk.black(file.filePath)}`
+              );
+              file.messages.forEach((message: any) => {
                 const chalkColor = ['green', 'orange', 'red'][message.severity];
                 // tslint:disable-next-line:prefer-template
-                console.log(`  ${message.ruleId
-                  ? `[${chalk[chalkColor](message.ruleId)}] `
-                  : ''}${message.message} ${chalk.blue(`(line: ${message.line}, column: ${message.column})`)}`);
+                console.log(
+                  `  ${
+                    message.ruleId
+                      ? `[${chalk[chalkColor](message.ruleId)}] `
+                      : ''
+                  }${message.message} ${chalk.blue(
+                    `(line: ${message.line}, column: ${message.column})`
+                  )}`
+                );
               });
             }
           });
-          exitToUse(parseInt(report.errorCount, 10) + parseInt(report.warningCount, 10) > 0 ? 1 : 0);
+          exitToUse(
+            parseInt(report.errorCount, 10) +
+              parseInt(report.warningCount, 10) >
+              0
+              ? 1
+              : 0
+          );
           break;
         }
         case 'run-script': {
@@ -499,10 +573,13 @@ export default (tools : BuildTools,
           break;
         }
         case 'test': {
-          const jestRunExtension = (port? : number, testURL? : string) => ({
+          const jestRunExtension = (port?: number, testURL?: string) => ({
             onStart: () => {
-              const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
-              let jestConfig : JestConfig.InitialOptions = {
+              const jestTransform = path.join(
+                buildCacheDir,
+                'jest-transform.js'
+              );
+              let jestConfig: JestConfig.InitialOptions = {
                 maxWorkers: 4,
                 verbose: true,
                 rootDir: workDir,
@@ -516,19 +593,19 @@ export default (tools : BuildTools,
                 collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}'],
                 watchPathIgnorePatterns: ['dist', 'target'],
                 moduleNameMapper: {
-                  '\\.(css|less|sass|scss)$': `${__dirname}/__mocks__/style-mock.js`
+                  '\\.(css|less|sass|scss)$': `${__dirname}/__mocks__/style-mock.js`,
                 },
                 modulePathIgnorePatterns: ['/node_modules/', '/dist/'],
                 transform: {
                   '^.+\\.js$': jestTransform,
-                  '^.+\\.tsx?$': 'ts-jest'
+                  '^.+\\.tsx?$': require.resolve('ts-jest'),
                 },
                 transformIgnorePatterns: [
                   '/node_modules/(?!@github1).+$',
-                  '.*react\-githubish.*',
-                  '.*react\-portal.*'
+                  '.*react-githubish.*',
+                  '.*react-portal.*',
                 ],
-                setupFiles: []
+                setupFiles: [],
               };
               jestConfig.setupFiles = [require.resolve('./jest-helpers.js')];
               // tslint:disable-next-line:non-literal-fs-path
@@ -547,16 +624,23 @@ export default (tools : BuildTools,
               if (fs.existsSync(jestConfiguratorFile)) {
                 // tslint:disable-next-line:non-literal-require
                 const jestConfigurator = require(jestConfiguratorFile);
-                console.log(chalk.blue('[build-tools] ') + chalk.black(`Using ${jestConfiguratorFile}`));
+                console.log(
+                  chalk.blue('[build-tools] ') +
+                    chalk.black(`Using ${jestConfiguratorFile}`)
+                );
                 if (typeof jestConfigurator === 'function') {
                   jestConfig = jestConfigurator(jestConfig);
                 } else {
                   jestConfig = jestConfigurator;
                 }
               }
-              const jestConfigFile = path.join(buildCacheDir, 'jest-config.json');
+              const jestConfigFile = path.join(
+                buildCacheDir,
+                'jest-config.json'
+              );
               // tslint:disable-next-line:non-literal-fs-path
-              const jestTransformTemplate = fs.readFileSync(path.join(__dirname, 'jest-transform.tpl'))
+              const jestTransformTemplate = fs
+                .readFileSync(path.join(__dirname, 'jest-transform.tpl'))
                 .toString();
               const jestTransformContent = jestTransformTemplate
                 .replace(/\$BABEL_CONFIG/, JSON.stringify(babelOptions))
@@ -565,21 +649,26 @@ export default (tools : BuildTools,
               fs.writeFileSync(jestTransform, jestTransformContent);
               // tslint:disable-next-line:non-literal-fs-path
               fs.writeFileSync(jestConfigFile, JSON.stringify(jestConfig));
-              const jestCLIArgs = {...args};
+              const jestCLIArgs = { ...args };
               delete jestCLIArgs.task;
-              if (jestCLIArgs.reporters && !Array.isArray(jestCLIArgs.reporters)) {
+              if (
+                jestCLIArgs.reporters &&
+                !Array.isArray(jestCLIArgs.reporters)
+              ) {
                 jestCLIArgs.reporters = [jestCLIArgs.reporters];
               }
               jestCLIArgs.config = jestConfigFile;
-              const testFileToRun = jestCLIArgs.testFile || jestCLIArgs.runTestsByPath;
+              const testFileToRun =
+                jestCLIArgs.testFile || jestCLIArgs.runTestsByPath;
               if (testFileToRun) {
                 // run specific test file
                 jestCLIArgs._ = [testFileToRun];
               }
-              const jestResult = tools.jest
-                .runCLI(jestCLIArgs as any, [workDir]);
+              const jestResult = tools.jest.runCLI(jestCLIArgs as any, [
+                workDir,
+              ]);
               if (jestResult && jestResult.then) {
-                jestResult.then((res : { results : JestAggregatedResult }) => {
+                jestResult.then((res: { results: JestAggregatedResult }) => {
                   if (res.results && res.results.numFailedTests > 0) {
                     exit(1);
                   } else {
@@ -587,22 +676,23 @@ export default (tools : BuildTools,
                   }
                 });
               }
-            }
+            },
           });
           if (process.env.NO_SERVER) {
-            jestRunExtension()
-              .onStart();
+            jestRunExtension().onStart();
           } else {
-            getPort()
-              .then((port : number) => {
-                const testURL = `http://localhost:${port}/`;
-                tools.appServer(
-                  prepareAppServerExtensions({
-                    devServerExtension: args.webpackDevServer === undefined || args.webpackDevServer,
-                    withExtensions: jestRunExtension(port, testURL)
-                  })
-                  , port);
-              });
+            getPort().then((port: number) => {
+              const testURL = `http://localhost:${port}/`;
+              tools.appServer(
+                prepareAppServerExtensions({
+                  devServerExtension:
+                    args.webpackDevServer === undefined ||
+                    args.webpackDevServer,
+                  withExtensions: jestRunExtension(port, testURL),
+                }),
+                port
+              );
+            });
           }
           break;
         }
@@ -613,12 +703,12 @@ export default (tools : BuildTools,
     };
     runTask(args.task, exit);
   })
-    .then((result : TaskResult) => {
+    .then((result: TaskResult) => {
       if (result && result.handler) {
         result.handler();
       }
     })
-    .catch((err : Error) => {
+    .catch((err: Error) => {
       let status = 1;
       if (typeof err !== 'number') {
         console.log(err);
