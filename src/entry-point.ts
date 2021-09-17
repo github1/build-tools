@@ -130,7 +130,10 @@ export default (
       const webpackConfig: webpack.Configuration = {
         context: workDir,
         entry: {
-          main: [require.resolve('idempotent-babel-polyfill'), './src/index'],
+          main: [
+            require.resolve('idempotent-babel-polyfill'),
+            args.entryMain || './src/index',
+          ],
         },
         resolve: {
           extensions: ['.ts', '.tsx', '.js'],
