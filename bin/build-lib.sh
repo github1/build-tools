@@ -21,7 +21,6 @@ function transpile() {
       TSDIR=$(dirname $(dirname $(node -p "require.resolve('typescript')")))
       log "using typescript version $(cat "${TSDIR}/package.json" | jq -r .version) from ${TSDIR}"
       TSC="${TSDIR}/bin/tsc"
-      "${TSC}" --pretty --project tsconfig.json --outDir "${DIST}"
       "${TSC}" --pretty --project tsconfig.json --module "commonjs" --outDir "${DIST}/es5"
   else
       IGNORE="src/**/*.test.js"
@@ -40,14 +39,16 @@ function transpile() {
 function prepareDist() {
   log "prepare dist"
 
-  local l_MAIN=$(cat package.json | jq -r ".main" | sed 's|dist/||g' | sed 's|src/||g' | sed 's/\.ts$/.js/g')
+  local l_MAIN=$(cat package.json | jq -r ".main" | sed -E 's/(dist|src)\/(es5\/)?//g' | sed 's/\.ts$/.js/g')
   if [[ -z "${VAL}" ]] || [[ "${VAL}" == 'null' ]]; then
     l_MAIN="index.js"
   fi
-  PACKAGE_JSON=$(echo "${PACKAGE_JSON}" | jq '.main = "es5/'"${l_MAIN}"'" | .module = "'"${l_MAIN}"'"')
+  PACKAGE_JSON=$(echo "${PACKAGE_JSON}" | jq '.main = "es5/'"${l_MAIN}"'"')
+  log "using main $(echo "${PACKAGE_JSON}" | jq -r .main)"
   if [[ "${PROJECT_TYPE}" == 'ts' ]]; then
-    local l_TYPES=$(echo "${l_MAIN}" | sed 's|dist/||g' | sed 's|src/||g' | sed 's/\.js$/.d.ts/g')
+    local l_TYPES=$(echo "${l_MAIN}" | sed -E 's/(dist|src)\/(es5\/)?//g' | sed -E 's/\.js$/.d.ts/g')
     PACKAGE_JSON=$(echo "${PACKAGE_JSON}" | jq '.types = "es5/'"${l_TYPES}"'"')
+    log "using types $(echo "${PACKAGE_JSON}" | jq -r .types)"
   fi
 
   log "writing package.json"
