@@ -39,7 +39,12 @@ function transpile() {
 function prepareDist() {
   log "prepare dist"
 
-  local l_MAIN=$(cat package.json | jq -r ".main" | sed -E 's/(dist|src)\/(es5\/)?//g' | sed 's/\.ts$/.js/g')
+  local l_MAIN=$(cat package.json | jq -r ".main")
+  if echo "${l_MAIN}" | grep -qv 'es5'; then
+    log "invalid main property in package.json - ${l_MAIN}"
+    exit 1
+  fi
+  l_MAIN=$(echo "${l_MAIN}" | sed -E 's/(dist|src)\/(es5\/)?//g' | sed 's/\.ts$/.js/g')
   if [[ -z "${VAL}" ]] || [[ "${VAL}" == 'null' ]]; then
     l_MAIN="index.js"
   fi
