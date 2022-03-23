@@ -66,6 +66,7 @@ function createArchive() {
   fi
   if [[ -n "${PROJECT_VERSION}" ]]; then
     PACKAGE_NAME="${PACKAGE_NAME}-${PROJECT_VERSION}"
+    echo ${PROJECT_VERSION} > "target/dist/public/version.txt"
   fi
   ARCHIVE_NAME="target/dist/${PACKAGE_NAME}.tar.gz"
   echo "Creating archive ${ARCHIVE_NAME}"
