@@ -168,10 +168,6 @@ export default (
               exclude: /(node_modules)/,
               use: [
                 {
-                  loader: require.resolve('babel-loader'),
-                  options: babelOptions,
-                },
-                {
                   loader: 'swc-loader',
                   options: {
                     jsc: {
@@ -196,7 +192,7 @@ export default (
                   loader: require.resolve('postcss-loader'),
                   options: {
                     plugins: postCssPlugins,
-                    sourceMap: process.env.SASS_SOURCE_MAP !== 'false',
+                    sourceMap: process.env.POST_CSS_SOURCE_MAP === 'true',
                   },
                 },
                 {
@@ -217,18 +213,11 @@ export default (
                   loader: require.resolve('postcss-loader'),
                   options: {
                     plugins: postCssPlugins,
-                    sourceMap: process.env.SASS_SOURCE_MAP !== 'false',
+                    sourceMap: process.env.POST_CSS_SOURCE_MAP === 'true',
                   },
                 },
                 {
-                  loader: require.resolve('resolve-url-loader'),
-                  options: { engine: 'rework' },
-                },
-                {
-                  loader: require.resolve('sass-loader'),
-                  options: {
-                    sourceMap: process.env.SASS_SOURCE_MAP !== 'false',
-                  },
+                  loader: require.resolve('fast-sass-loader'),
                 },
               ],
             },
@@ -323,10 +312,6 @@ export default (
               test: /\.ts(x?)$/,
               exclude: /(node_modules)/,
               use: [
-                {
-                  loader: require.resolve('babel-loader'),
-                  options: babelOptions,
-                },
                 {
                   loader: 'swc-loader',
                   options: {
