@@ -172,7 +172,14 @@ export default (
                   options: babelOptions,
                 },
                 {
-                  loader: 'ts-loader',
+                  loader: 'swc-loader',
+                  options: {
+                    jsc: {
+                      parser: {
+                        syntax: 'typescript',
+                      },
+                    },
+                  },
                 },
               ],
             },
@@ -321,9 +328,13 @@ export default (
                   options: babelOptions,
                 },
                 {
-                  loader: 'ts-loader',
+                  loader: 'swc-loader',
                   options: {
-                    configFile: 'tsconfig.server.json',
+                    jsc: {
+                      parser: {
+                        syntax: 'typescript',
+                      },
+                    },
                   },
                 },
               ],
