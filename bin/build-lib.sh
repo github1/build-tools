@@ -46,8 +46,8 @@ function prepareDist() {
   fi
   PACKAGE_JSON=$(echo "${PACKAGE_JSON}" | jq '.main = "es5/'"${l_MAIN}"'" | .module = "'"${l_MAIN}"'"')
   if [[ "${PROJECT_TYPE}" == 'ts' ]]; then
-    local l_TYPES=$(echo "${l_MAIN}" | sed 's/\.js$/.d.ts/g')
-    PACKAGE_JSON=$(echo "${PACKAGE_JSON}" | jq '.types = "'"${l_TYPES}"'"')
+    local l_TYPES=$(echo "${l_MAIN}" | sed 's|dist/||g' | sed 's|src/||g' | sed 's/\.js$/.d.ts/g')
+    PACKAGE_JSON=$(echo "${PACKAGE_JSON}" | jq '.types = "es5/'"${l_TYPES}"'"')
   fi
 
   log "writing package.json"
