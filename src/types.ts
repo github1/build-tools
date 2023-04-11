@@ -24,7 +24,6 @@ export type TaskLogger = {
 export type TaskContext = {
   packageJsonLoader: PackageJsonLoader;
   logger: TaskLogger;
-
   buildToolsDir: string;
   workDir: string;
   buildCacheDir: string;

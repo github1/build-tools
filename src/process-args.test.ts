@@ -30,7 +30,7 @@ describe('when a process is passed', () => {
       .toEqual(true);
     expect(args.kebabCase)
       .toEqual('works');
-    expect(args.task)
+    expect(args.positional[0])
       .toEqual('theTask');
   });
 });

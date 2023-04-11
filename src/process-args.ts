@@ -2,7 +2,8 @@
 import { TaskArgs } from './types';
 
 function evaluateValue(value: string) {
-  return typeof value === 'undefined' ? true : value;
+  const val = typeof value === 'undefined' ? true : value;
+  return 'true' === value ? true : 'false' === value ? false : val;
 }
 
 function camelize(str): string {
