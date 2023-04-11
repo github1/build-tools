@@ -25,7 +25,7 @@ export function prepareBabelOptions() {
       ].map(resolveBabelModules),
     };
 
-    require('ignore-styles').default(['.less', '.scss', '.css']);
+    require('ignore-styles').default(['.scss', '.css']);
     // tslint:disable-next-line:no-submodule-imports
     require('@babel/register')(babelOptions);
   }

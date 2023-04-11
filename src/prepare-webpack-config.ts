@@ -102,27 +102,6 @@ export function prepareWebpackConfig({
           ],
         },
         {
-          test: /\.less$/,
-          use: [
-            {
-              loader: styleLoader,
-            },
-            {
-              loader: require.resolve('css-loader'),
-            },
-            {
-              loader: require.resolve('postcss-loader'),
-              options: {
-                plugins: postCssPlugins,
-                sourceMap: env.POST_CSS_SOURCE_MAP === 'true',
-              },
-            },
-            {
-              loader: require.resolve('less-loader'),
-            },
-          ],
-        },
-        {
           test: /\.(scss|sass)$/,
           use: [
             {

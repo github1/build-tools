@@ -58,8 +58,6 @@
     "jest-environment-jsdom": "29.5.0",
     "json-stringify-safe": "5.0.1",
     "jsonpath": "1.0.2",
-    "less": "3.0.1",
-    "less-loader": "11.1.0",
     "mini-css-extract-plugin": "2.7.5",
     "null-loader": "4.0.1",
     "open": "7.3.0",

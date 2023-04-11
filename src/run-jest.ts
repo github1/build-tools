@@ -30,7 +30,7 @@ export async function runJest(taskContext: TaskContext) {
         collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}'],
         watchPathIgnorePatterns: ['dist', 'target'],
         moduleNameMapper: {
-          '\\.(css|less|sass|scss)$': `${__dirname}/__mocks__/style-mock.js`,
+          '\\.(css|sass|scss)$': `${__dirname}/__mocks__/style-mock.js`,
         },
         modulePathIgnorePatterns: ['/node_modules/', '/dist/'],
         transform: {

@@ -52,7 +52,7 @@ export function prepareWebpackServerConfig({
           ],
         },
         {
-          test: /\.(less|scss)$/,
+          test: /\.scss$/,
           use: {
             loader: require.resolve('null-loader'),
           },
