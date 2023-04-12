@@ -46,7 +46,7 @@
     "css-loader": "6.7.3",
     "cssnano": "4.1.7",
     "eslint": "8.38.0",
-    "eslint-plugin-react": "7.11.1",
+    "eslint-plugin-react": "7.32.2",
     "esm": "3.2.22",
     "express": "4.17.1",
     "fast-sass-loader": "2.0.1",
@@ -77,7 +77,7 @@
     "tslib": "2.5.0",
     "tsutils": "3.21.0",
     "typescript": "5.0.4",
-    "url-loader": "1.1.2",
+    "url-loader": "4.1.1",
     "webpack": "5.78.0",
     "webpack-bundle-analyzer": "4.8.0",
     "webpack-dev-middleware": "6.0.2",
@@ -86,7 +86,7 @@
   },
   "devDependencies": {
     "@types/express": "4.17.7",
-    "@jest/types": "26.6.2",
+    "@types/jest": "29.5.0",
     "@jest/test-result": "26.6.2"
   },
   "publishConfig": {
