@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-SCRIPTPATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+readlink_f() {
+  echo $(python -c "import os, sys; print(os.path.realpath('$1'))")
+}
+
+SCRIPTPATH=$(readlink_f ${0} | xargs dirname)
 
 function log() {
   >&2 echo "$PROJECT_NAME - $@"
