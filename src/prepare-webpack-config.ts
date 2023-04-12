@@ -1,15 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Configuration } from 'webpack';
-import { TaskContext } from './types';
+import {TaskContext, TaskLogger} from './types';
 import { prepareBabelOptions } from './prepare-babel-options';
 import { maybeLoadPackageJson } from './maybe-package-json-loader';
 // tslint:disable-next-line:no-var-requires
 const nodeExternals = require('webpack-node-externals');
 
-function hasIndex(dir) {
+function hasIndex(dir: string, logger: TaskLogger): boolean {
   try {
-    console.error(dir, fs.readdirSync(dir));
+    logger.info(dir, fs.readdirSync(dir));
     for (const item of fs.readdirSync(dir)) {
       if (/^index\.[^.]+$/.test(item)) {
         return true;
@@ -23,6 +23,7 @@ function hasIndex(dir) {
 
 export function prepareWebpackConfig({
   packageJsonLoader,
+  logger,
   workDir,
   env,
   args,
@@ -52,7 +53,7 @@ export function prepareWebpackConfig({
     entry: {
       main: [
         require.resolve('idempotent-babel-polyfill'),
-        args.entryMain || hasIndex(path.join(workDir, 'src'))
+        args.entryMain || hasIndex(path.join(workDir, 'src'), logger)
           ? './src/index'
           : './index',
       ],

@@ -10,6 +10,7 @@ describe('when the entry point is called', () => {
   let status;
   let run;
   let logs;
+  let caughtError : Error;
   beforeEach(() => {
     webpack = jest.fn((config: any, callback: any) =>
       callback(undefined, {
@@ -60,7 +61,7 @@ describe('when the entry point is called', () => {
           appServer,
         },
       }).catch((err) => {
-        console.error(err);
+        caughtError = err;
         status = 1;
       });
   });
@@ -148,6 +149,7 @@ describe('when the entry point is called', () => {
         });
       return run().then(() => {
         expect(status).toBe(1);
+        expect(caughtError.message).toContain('webpack failed');
       });
     });
   });
