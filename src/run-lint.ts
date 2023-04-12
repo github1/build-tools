@@ -1,53 +1,68 @@
 import { TaskContext, TaskError } from './types';
-import * as path from 'path';
 import chalk from 'chalk';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ESLint } from 'eslint';
 
-export function runLint(taskContext: TaskContext) {
-  const CLIEngine = require('eslint').CLIEngine;
-  const cli = new CLIEngine({
+export async function runLint(taskContext: TaskContext) {
+  const esLint = new ESLint({
+    cwd: taskContext.workDir,
+    fix: true,
+    useEslintrc: false,
+    resolvePluginsRelativeTo: taskContext.buildToolsDir,
     baseConfig: {
-      extends: ['eslint:recommended', 'plugin:react/recommended'],
+      env: {
+        browser: true,
+        node: true,
+      },
+      extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:react/recommended',
+      ],
       settings: {
         react: {
           version: '16.0',
         },
       },
-    },
-    envs: ['node', 'browser', 'es6'],
-    fix: true,
-    useEslintrc: false,
-    workingDirectories: [taskContext.workDir],
-    parser: '@babel/eslint-parser',
-    parserOptions: {
-      ecmaVersion: 6,
-      sourceType: 'module',
-      requireConfigFile: 'false',
-      babelOptions: {
-        configFile: path.resolve(
-          path.join(taskContext.buildToolsDir, 'config/babelrc.json')
-        ),
+      ignorePatterns: ['src/**/*.test.*', '**/target/**'],
+      plugins: ['@typescript-eslint', 'react'],
+      parser: '@typescript-eslint/parser',
+      root: true,
+      parserOptions: {
+        project: fs.existsSync(path.join(taskContext.workDir, 'tsconfig.json')),
+        tsconfigRootDir: taskContext.workDir,
       },
-      ecmaFeatures: {
-        jsx: true,
-        arrowFunctions: true,
-      },
+      // parserOptions: {
+      //   ecmaVersion: 6,
+      //   sourceType: 'module',
+      //   requireConfigFile: 'false',
+      //   envs: ['node', 'browser', 'es6'],
+      //   ecmaFeatures: {
+      //     jsx: true,
+      //     arrowFunctions: true,
+      //   },
+      //   babelOptions: {
+      //     configFile: path.resolve(
+      //       path.join(taskContext.buildToolsDir, 'config/babelrc.json')
+      //     ),
+      //   },
+      // },
     },
-    plugins: ['react'],
-    rules: {
-      'react/display-name': 0,
-      'react/prop-types': 0,
-    },
-    ignorePattern: ['src/**/*.test.js', '**/target/**'],
   });
-  const report = cli.executeOnFiles([path.resolve(taskContext.workDir)]);
-  report.results.forEach((file: any) => {
-    if (file.messages.length > 0) {
+  const results = await esLint.lintFiles(`${taskContext.workDir}`);
+  let errorCount = 0;
+  results.forEach((result: ESLint.LintResult) => {
+    if (result.messages.length > 0) {
       taskContext.logger.info(
         chalk.magenta('[lint]'),
-        chalk.black(file.filePath)
+        chalk.black(result.filePath)
       );
-      file.messages.forEach((message: any) => {
+      result.messages.forEach((message: any) => {
         const chalkColor = ['green', 'orange', 'red'][message.severity];
+        if (message.severity > 1) {
+          errorCount++;
+        }
         const msg = [];
         if (message.ruleId) {
           msg.push(`[${chalk[chalkColor](message.ruleId)}]`);
@@ -60,10 +75,8 @@ export function runLint(taskContext: TaskContext) {
       });
     }
   });
-  const hasErrorsOrWarnings =
-    parseInt(report.errorCount, 10) + parseInt(report.warningCount, 10) > 0;
-  if (hasErrorsOrWarnings) {
-    throw new TaskError();
+  if (errorCount) {
+    throw new TaskError('lint errors');
   } else {
     taskContext.logger.info(chalk.magenta('[lint]'), 'success');
   }

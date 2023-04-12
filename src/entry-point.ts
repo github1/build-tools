@@ -53,7 +53,7 @@ export default async (taskContext: TaskContext): Promise<TaskResult> => {
         break;
       }
       case 'lint': {
-        runLint(taskContext);
+        await runLint(taskContext);
         break;
       }
       case 'run-script': {
