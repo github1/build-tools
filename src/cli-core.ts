@@ -36,7 +36,7 @@ if (
   });
 } else {
   const args: TaskArgs = processArgs(process);
-  const workDir = path.resolve(args.cwd) || process.cwd();
+  const workDir = args.cwd ? path.resolve(args.cwd) : process.cwd();
   const buildKey = Buffer.from(
     crypto.createHash('md5').update(workDir).digest('hex')
   )
@@ -50,7 +50,14 @@ if (
   fs.mkdirSync(buildCacheDir, { recursive: true });
 
   function prefixLog(prefix, ...args) {
-    if (`${args[0]}`.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '').indexOf('[') !== 0) {
+    if (
+      `${args[0]}`
+        .replace(
+          /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+          ''
+        )
+        .indexOf('[') !== 0
+    ) {
       args.unshift(prefix);
     }
     return args;

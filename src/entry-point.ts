@@ -42,7 +42,8 @@ export default async (taskContext: TaskContext): Promise<TaskResult> => {
               true,
               [prepareOpenBrowserDevServerExtension(taskContext)],
               taskContext
-            )
+            ),
+            args.port
           );
         };
         if (findServerFiles(workDir).length > 0) {

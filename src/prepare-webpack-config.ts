@@ -45,7 +45,7 @@ export function prepareWebpackConfig({
       })
     );
   }
-  const styleLoader = env.INLINE_STYLE
+  const styleLoader = args.inlineStyle
     ? require.resolve('style-loader')
     : MiniCssExtractPlugin.loader;
   const webpackConfig: Configuration = {
