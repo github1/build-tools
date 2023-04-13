@@ -12,7 +12,6 @@ export async function runJest(taskContext: TaskContext) {
   const { buildCacheDir, workDir, args, tools } = taskContext;
   const jestRunExtension = (port?: number, testURL?: string) => ({
     onStart: () => {
-      testURL = testURL || 'http://localhost';
       const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
       let jestConfig: JestConfig.InitialOptions = {
         maxWorkers: 4,
@@ -20,7 +19,7 @@ export async function runJest(taskContext: TaskContext) {
         rootDir: workDir,
         testEnvironment: 'jsdom',
         testEnvironmentOptions: {
-          url: testURL,
+          url: testURL || 'http://localhost',
         },
         testRegex: '.*\\.test\\.(js|tsx?)$',
         globals: {},
@@ -38,9 +37,7 @@ export async function runJest(taskContext: TaskContext) {
           '^.+\\.tsx?$': require.resolve('ts-jest'),
         },
         transformIgnorePatterns: [
-          '/node_modules/(?!@github1).+$',
-          '.*react-githubish.*',
-          '.*react-portal.*',
+          '/node_modules/(?!@github1).+$'
         ],
         setupFiles: [],
       };
