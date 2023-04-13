@@ -33,21 +33,18 @@ export async function runLint(taskContext: TaskContext) {
         project: fs.existsSync(path.join(taskContext.workDir, 'tsconfig.json')),
         tsconfigRootDir: taskContext.workDir,
       },
-      // parserOptions: {
-      //   ecmaVersion: 6,
-      //   sourceType: 'module',
-      //   requireConfigFile: 'false',
-      //   envs: ['node', 'browser', 'es6'],
-      //   ecmaFeatures: {
-      //     jsx: true,
-      //     arrowFunctions: true,
-      //   },
-      //   babelOptions: {
-      //     configFile: path.resolve(
-      //       path.join(taskContext.buildToolsDir, 'config/babelrc.json')
-      //     ),
-      //   },
-      // },
+      rules: {
+        'react/prop-types': 'off',
+        'react/display-name': 'off'
+      },
+      overrides: [
+        {
+          files: ['**/*.js'],
+          rules: {
+            '@typescript-eslint/no-var-requires': 'off',
+          },
+        },
+      ],
     },
   });
   const results = await esLint.lintFiles(`${taskContext.workDir}`);
@@ -59,7 +56,8 @@ export async function runLint(taskContext: TaskContext) {
         chalk.black(result.filePath)
       );
       result.messages.forEach((message: any) => {
-        const chalkColor = ['green', 'orange', 'red'][message.severity];
+        const chalkColor =
+          ['green', 'yellow', 'red'][message.severity] || 'red';
         if (message.severity > 1) {
           errorCount++;
         }
