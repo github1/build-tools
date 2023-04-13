@@ -28,7 +28,7 @@ function transpile() {
       ${SCRIPTPATH}/../node_modules/.bin/babel src \
           --out-dir "${DIST}" \
           --ignore "${IGNORE}"
-      sed -i '' 's|false|"commonjs"|g' .babelrc
+      cat "${SCRIPTPATH}/../config/babelrc.json" | sed 's|false|"commonjs"|g' > .babelrc
       ${SCRIPTPATH}/../node_modules/.bin/babel src \
           --out-dir "${DIST}/es5" \
           --ignore "${IGNORE}"
