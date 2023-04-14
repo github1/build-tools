@@ -114,7 +114,9 @@ export function prepareWebpackConfig({
             {
               loader: require.resolve('postcss-loader'),
               options: {
-                plugins: postCssPlugins,
+                postcssOptions: {
+                  plugins: postCssPlugins,
+                },
                 sourceMap: env.POST_CSS_SOURCE_MAP === 'true',
               },
             },
