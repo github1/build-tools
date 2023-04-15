@@ -50,7 +50,8 @@ export default async (taskContext: TaskContext): Promise<TaskResult> => {
           await runWebpack(taskContext, prepareWebpackServerConfig);
         }
         runDevServer();
-        break;
+        // don't resolve, keep server running
+        return new Promise(() => {});
       }
       case 'lint': {
         await runLint(taskContext);
