@@ -68,8 +68,7 @@ export default async (taskContext: TaskContext): Promise<TaskResult> => {
         break;
       }
       case 'test': {
-        await runJest(taskContext);
-        break;
+        return runJest(taskContext);
       }
       default:
         throw new TaskError(`unknown task ${task}`);

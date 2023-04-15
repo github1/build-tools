@@ -94,6 +94,9 @@ if (
       appServer,
       jest,
     },
+  }).then(() => {
+    taskLogger.info('ok');
+    process.exit(0);
   }).catch((err) => {
     taskLogger.error(err);
     process.exit(1);

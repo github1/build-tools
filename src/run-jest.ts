@@ -1,4 +1,4 @@
-import { TaskContext, TaskError } from './types';
+import { TaskContext, TaskError, TaskResult } from './types';
 import * as path from 'path';
 import { Config as JestConfig } from '@jest/types';
 import * as fs from 'fs';
@@ -8,8 +8,12 @@ import { Argv } from '@jest/types/build/Config';
 import { prepareAppServerExtensions } from './prepare-app-server-extensions';
 import getPort = require('get-port');
 
-export async function runJest(taskContext: TaskContext) {
+export async function runJest(taskContext: TaskContext): Promise<TaskResult> {
   const { buildCacheDir, workDir, args, tools } = taskContext;
+  let taskResultDeferredPromiseResolve = null;
+  const taskResultDeferredPromise = new Promise((resolve) => {
+    taskResultDeferredPromiseResolve = resolve;
+  });
   const jestRunExtension = (port?: number, testURL?: string) => ({
     onStart: () => {
       const jestTransform = path.join(buildCacheDir, 'jest-transform.js');
@@ -36,9 +40,7 @@ export async function runJest(taskContext: TaskContext) {
           '^.+\\.js$': jestTransform,
           '^.+\\.tsx?$': require.resolve('ts-jest'),
         },
-        transformIgnorePatterns: [
-          '/node_modules/(?!@github1).+$'
-        ],
+        transformIgnorePatterns: ['/node_modules/(?!@github1).+$'],
         setupFiles: [],
       };
       jestConfig.setupFiles = [require.resolve('./jest-helpers.js')];
@@ -189,11 +191,12 @@ export async function runJest(taskContext: TaskContext) {
       process.chdir(workDir);
       const jestResult = tools.jest.runCLI(jestCLIArgs, [workDir]);
       if (jestResult && jestResult.then) {
-        return jestResult.then((res) => {
+        const jestPromiseResult = (jestResult.then((res) => {
           if (res.results.numFailedTests > 0) {
             throw new TaskError(`${res.results.numFailedTests} failed tests`);
           }
-        });
+        }));
+        taskResultDeferredPromiseResolve(jestPromiseResult);
       } else {
         throw new TaskError('no jest results');
       }
@@ -212,6 +215,7 @@ export async function runJest(taskContext: TaskContext) {
       );
     });
   } else {
-    await jestRunExtension().onStart();
+    jestRunExtension().onStart();
   }
+  return taskResultDeferredPromise;
 }
